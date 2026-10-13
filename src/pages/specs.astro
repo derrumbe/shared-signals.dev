@@ -1,0 +1,67 @@
+---
+import Base from '../layouts/Base.astro';
+import { SPEC_URLS } from '../consts';
+const rfcs = [
+  ['RFC 8417', 'Security Event Token (SET)', 'The JWT format every SSF event is carried in.', 'https://www.rfc-editor.org/rfc/rfc8417'],
+  ['RFC 8935', 'Push-Based SET Delivery Using HTTP', 'Transmitter POSTs SETs to the Receiver.', 'https://www.rfc-editor.org/rfc/rfc8935'],
+  ['RFC 8936', 'Poll-Based SET Delivery Using HTTP', 'Receiver polls the Transmitter and acknowledges SETs.', 'https://www.rfc-editor.org/rfc/rfc8936'],
+  ['RFC 9493', 'Subject Identifiers for Security Event Tokens', 'The email / iss_sub / opaque / … subject formats.', 'https://www.rfc-editor.org/rfc/rfc9493'],
+  ['RFC 7519', 'JSON Web Token (JWT)', 'The token format underneath SETs.', 'https://www.rfc-editor.org/rfc/rfc7519'],
+  ['RFC 6749', 'OAuth 2.0', 'The usual way Receivers authorise to the stream management API.', 'https://www.rfc-editor.org/rfc/rfc6749'],
+];
+---
+<Base title="Specifications" description="The OpenID Shared Signals Framework, CAEP and RISC specifications, the CAEP Interoperability Profile, and the IETF RFCs they build on.">
+  <p class="eyebrow">Specifications</p>
+  <h1>The specifications</h1>
+  <p class="lede">Three OpenID Foundation final specifications, one interoperability profile, and the IETF RFCs underneath them.
+  All are developed in the open by the <a href={SPEC_URLS.wg}>Shared Signals Working Group</a>.</p>
+
+  <section id="ssf" class="prose">
+    <h2><span class="tag ssf">Final</span> Shared Signals Framework 1.0</h2>
+    <p>The framework everything else plugs into. Defines subject principals and identifiers, how SSF uses SETs,
+    Transmitter discovery, the stream management API (create, read, update, delete, status, subjects, verification),
+    and how push and poll delivery are profiled.</p>
+    <p><a href={SPEC_URLS.ssf}>Read SSF 1.0 →</a> · <a href="/learn/">Our walkthrough</a></p>
+  </section>
+
+  <section id="caep" class="prose">
+    <h2><span class="tag caep">Final</span> Continuous Access Evaluation Profile (CAEP) 1.0</h2>
+    <p>Event types for continuously re-evaluating access during a session: session revoked, established and presented;
+    token claims change; credential change; assurance level change; device compliance change; and risk level change.
+    Also defines optional claims common to all CAEP events — <code>event_timestamp</code>, <code>initiating_entity</code>,
+    <code>reason_admin</code> and <code>reason_user</code>.</p>
+    <p><a href={SPEC_URLS.caep}>Read CAEP 1.0 →</a> · <a href="/events/#caep">CAEP event types</a></p>
+  </section>
+
+  <section id="risc" class="prose">
+    <h2><span class="tag risc">Final</span> Risk Incident Sharing and Coordination (RISC) 1.0</h2>
+    <p>Account-level events for coordinating responses to compromise across providers: credential compromise,
+    account disabled / enabled / purged, identifier changed or recycled, recovery activity, and opt-in/opt-out.
+    RISC's <code>sessions-revoked</code> is deprecated in favour of CAEP's <code>session-revoked</code>.</p>
+    <p><a href={SPEC_URLS.risc}>Read RISC 1.0 →</a> · <a href="/events/#risc">RISC event types</a></p>
+  </section>
+
+  <section id="caep-interop" class="prose">
+    <h2><span class="tag neutral">Draft</span> CAEP Interoperability Profile 1.0</h2>
+    <p>Narrows the options in SSF and CAEP to a common baseline so independently built Transmitters and Receivers
+    work together out of the box: required discovery fields, delivery methods, subject formats, authorisation,
+    and which event claims must be supported. If you are building something new, start here.</p>
+    <p><a href={SPEC_URLS.caepInterop}>Read the CAEP Interoperability Profile →</a></p>
+  </section>
+
+  <h2>Underlying IETF standards</h2>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>RFC</th><th>Title</th><th>Role in SSF</th></tr></thead>
+      <tbody>
+        {rfcs.map(([n, t, d, u]) => <tr><td><a href={u}>{n}</a></td><td>{t}</td><td>{d}</td></tr>)}
+      </tbody>
+    </table>
+  </div>
+
+  <h2>Following the work</h2>
+  <ul class="prose">
+    <li>Working group home: <a href={SPEC_URLS.wg}>openid.net/wg/sharedsignals</a></li>
+    <li>Spec sources, issues and pull requests: <a href={SPEC_URLS.github}>github.com/openid/sharedsignals</a></li>
+  </ul>
+</Base>

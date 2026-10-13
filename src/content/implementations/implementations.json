@@ -1,0 +1,60 @@
+[
+  {
+    "id": "caep-dev",
+    "name": "caep.dev",
+    "vendor": "SGNL",
+    "kind": "test-service",
+    "roles": ["transmitter", "receiver"],
+    "profiles": ["SSF", "CAEP"],
+    "url": "https://caep.dev/",
+    "source": "https://github.com/SGNL-ai/caep.dev",
+    "summary": "Public test Transmitter and Receiver for trying CAEP events against your own implementation."
+  },
+  {
+    "id": "sgnl-secevent",
+    "name": "secevent",
+    "vendor": "SGNL",
+    "kind": "library",
+    "roles": ["transmitter", "receiver"],
+    "profiles": ["SSF", "CAEP", "RISC"],
+    "language": "Go",
+    "url": "https://github.com/SGNL-ai/caep.dev/tree/main/secevent",
+    "source": "https://github.com/SGNL-ai/caep.dev/tree/main/secevent",
+    "summary": "Build, sign, parse and validate Security Event Tokens (RFC 8417)."
+  },
+  {
+    "id": "sgnl-ssfreceiver",
+    "name": "ssfreceiver",
+    "vendor": "SGNL",
+    "kind": "library",
+    "roles": ["receiver"],
+    "profiles": ["SSF"],
+    "language": "Go",
+    "url": "https://github.com/SGNL-ai/caep.dev/tree/main/ssfreceiver",
+    "source": "https://github.com/SGNL-ai/caep.dev/tree/main/ssfreceiver",
+    "summary": "Library for building SSF Receivers: discovery, stream management and event handling."
+  },
+  {
+    "id": "go-ssf-receiver",
+    "name": "SSF Receiver for Go",
+    "vendor": "Open source",
+    "kind": "library",
+    "roles": ["receiver"],
+    "profiles": ["SSF", "CAEP"],
+    "delivery": ["push", "poll"],
+    "language": "Go",
+    "url": "https://github.com/mike-kiser-sp/receiver",
+    "source": "https://github.com/mike-kiser-sp/receiver",
+    "summary": "A Go Shared Signals Receiver supporting push and poll delivery, stream status, and typed CAEP events."
+  },
+  {
+    "id": "google-risc",
+    "name": "Cross-Account Protection (RISC)",
+    "vendor": "Google",
+    "kind": "product",
+    "roles": ["transmitter"],
+    "profiles": ["RISC"],
+    "url": "https://developers.google.com/identity/protocols/risc",
+    "summary": "Google sends RISC security events about Google Accounts to apps that use Sign in with Google."
+  }
+]

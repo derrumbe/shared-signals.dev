@@ -1,0 +1,20 @@
+# Deployed as a Worker serving static assets, the same shape as xebecstudios.org.
+#
+# Today every request falls through to the built site in ./dist. The Worker exists
+# now so the sample Transmitter and Receiver can be added later as routes on the
+# same deployment (/.well-known/ssf-configuration, /ssf/*) without re-plumbing.
+#
+# Keep `name` matching the Worker shown in the Cloudflare dashboard. Workers Builds
+# deploys under its own project name, but `wrangler secret put` uses this one, and a
+# mismatch silently creates an empty second Worker.
+name = "shared-signals-dev"
+main = "worker/index.js"
+compatibility_date = "2026-01-01"
+
+[assets]
+directory = "./dist"
+binding = "ASSETS"
+# Only these paths reach the Worker before the asset handler. Everything else is a
+# static file. Add the transmitter/receiver routes here as they are built.
+run_worker_first = ["/.well-known/ssf-configuration*", "/ssf/*", "/api/*"]
+not_found_handling = "404-page"

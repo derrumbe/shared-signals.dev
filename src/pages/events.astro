@@ -1,0 +1,66 @@
+---
+import Base from '../layouts/Base.astro';
+import { Code } from 'astro:components';
+import { EVENTS, uri } from '../data/events';
+import { SPEC_URLS } from '../consts';
+
+const groups = [
+  { id: 'caep', title: 'CAEP events', spec: SPEC_URLS.caep, blurb: 'Session and access-condition changes while a user is signed in.' },
+  { id: 'risc', title: 'RISC events', spec: SPEC_URLS.risc, blurb: 'Account-level changes: compromise, lifecycle, recovery.' },
+  { id: 'ssf', title: 'SSF stream events', spec: SPEC_URLS.ssf, blurb: 'Housekeeping events about the stream itself, defined by the framework.' },
+] as const;
+---
+<Base title="Event types" description="Every CAEP, RISC and SSF event type: URI, claims, and an example Security Event Token payload.">
+  <p class="eyebrow">Reference</p>
+  <h1>Event types</h1>
+  <p class="lede">Every event type defined by the OpenID Shared Signals specifications, with its claims and an example SET payload.
+  Summaries are ours; the linked specs are normative.</p>
+
+  <nav class="tags" style="margin-bottom:1rem">
+    {groups.map((g) => <a href={`#${g.id}`} class={`tag ${g.id}`} style="text-decoration:none">{g.title}</a>)}
+  </nav>
+
+  {groups.map((g) => (
+    <section id={g.id}>
+      <h2>{g.title}</h2>
+      <p class="muted">{g.blurb} <a href={g.spec}>Specification →</a></p>
+      {EVENTS.filter((e) => e.spec === g.id).map((e) => (
+        <details id={`${e.spec}-${e.slug}`} class="card event" style="margin:.6rem 0">
+          <summary>
+            <span class={`tag ${e.spec}`}>{e.spec}</span>
+            <strong>{e.name}</strong>
+            {e.deprecated && <span class="tag neutral">deprecated</span>}
+            <span class="muted ev-sum">{e.summary}</span>
+          </summary>
+          <div class="ev-body">
+            {e.deprecated && <p class="callout">{e.deprecated}</p>}
+            <p><code>{uri(e)}</code></p>
+            {e.claims.length > 0 ? (
+              <div class="table-wrap"><table>
+                <thead><tr><th>Claim</th><th></th><th>Meaning</th></tr></thead>
+                <tbody>{e.claims.map((c) => <tr><td><code>{c.name}</code></td><td class="muted" style="font-size:.78rem">{c.req}</td><td>{c.desc}</td></tr>)}</tbody>
+              </table></div>
+            ) : <p class="muted">No event-specific claims.</p>}
+            {e.example && <Code code={JSON.stringify(e.example, null, 2)} lang="json" themes={{ light: 'github-light', dark: 'github-dark' }} />}
+          </div>
+        </details>
+      ))}
+    </section>
+  ))}
+</Base>
+
+<style>
+  .event summary{cursor:pointer;display:grid;grid-template-columns:auto 1fr;gap:.25rem .7rem;align-items:baseline;list-style:none}
+  .event summary::-webkit-details-marker{display:none}
+  .event summary strong{font-weight:600}
+  .event summary .ev-sum{grid-column:2;font-size:.92rem}
+  .event summary .tag.neutral{grid-column:2;justify-self:start}
+  .event[open]{border-color:var(--accent)}
+  .ev-body{margin-top:.8rem;min-width:0}
+  .ev-body code{overflow-wrap:anywhere}
+</style>
+<script>
+  // Open the event named in the URL hash, so /events/#caep-session-revoked deep-links.
+  const open = () => { const el = location.hash && document.getElementById(location.hash.slice(1)); if (el instanceof HTMLDetailsElement) el.open = true; };
+  open(); addEventListener('hashchange', open);
+</script>

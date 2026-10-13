@@ -1,0 +1,82 @@
+---
+import Base from '../layouts/Base.astro';
+import { SPEC_URLS } from '../consts';
+---
+<Base>
+  <section style="padding:2rem 0 1rem">
+    <p class="eyebrow">OpenID Shared Signals · SSF 1.0 · CAEP 1.0 · RISC 1.0</p>
+    <h1 style="max-width:18ch">When something changes, everyone who needs to know, knows.</h1>
+    <p class="lede">
+      The Shared Signals Framework lets identity providers, SaaS apps, device managers and security tools
+      tell each other about security-relevant changes — a revoked session, a compromised credential, a
+      device falling out of compliance — in real time, using signed, standard events.
+    </p>
+    <div class="actions">
+      <a class="btn primary" href="/learn/">Learn how it works →</a>
+      <a class="btn" href="/events/">Browse event types</a>
+      <a class="btn" href="/playground/">Try it</a>
+    </div>
+  </section>
+
+  <figure class="hero-fig" style="margin:2.5rem 0;background:var(--card);border:1px solid var(--rule);border-radius:12px;padding:1.5rem;overflow-x:auto">
+    <svg viewBox="0 0 760 210" width="100%" style="min-width:560px;display:block" role="img" aria-label="A Transmitter sends Security Event Tokens over a stream to a Receiver, which acts on them">
+      <rect class="b" x="10" y="40" width="190" height="120" rx="10"/>
+      <text class="t" x="30" y="78">Transmitter</text>
+      <text class="s" x="30" y="100">IdP, MDM, EDR, SaaS app</text>
+      <text class="s" x="30" y="120">Signs and sends events</text>
+      <rect class="b" x="560" y="40" width="190" height="120" rx="10"/>
+      <text class="t" x="580" y="78">Receiver</text>
+      <text class="s" x="580" y="100">App, IdP, gateway</text>
+      <text class="s" x="580" y="120">Validates and acts</text>
+      <path class="l" d="M200 80 H552"/><path class="d" d="M552 74 l9 6 -9 6z"/>
+      <text class="m" x="232" y="68">SET (secevent+jwt) · push or poll</text>
+      <path class="l" d="M560 128 H208" stroke-dasharray="5 5"/><path class="d" d="M208 122 l-9 6 9 6z"/>
+      <text class="m" x="232" y="150">Stream management API · discovery</text>
+      <text class="s" x="232" y="196">session-revoked · credential-change · account-disabled · risk-level-change …</text>
+    </svg>
+  </figure>
+
+  <h2>The specifications</h2>
+  <div class="grid">
+    <a class="card" href="/specs/#ssf">
+      <span class="tags"><span class="tag ssf">Framework</span></span>
+      <h3>Shared Signals Framework</h3>
+      <p>The plumbing: streams, subjects, discovery, the management API, and how events are packaged and delivered.</p>
+      <span class="more">SSF 1.0 →</span>
+    </a>
+    <a class="card" href="/specs/#caep">
+      <span class="tags"><span class="tag caep">Profile</span></span>
+      <h3>CAEP</h3>
+      <p>Continuous Access Evaluation Profile — events for session and access decisions while a user is signed in.</p>
+      <span class="more">8 event types →</span>
+    </a>
+    <a class="card" href="/specs/#risc">
+      <span class="tags"><span class="tag risc">Profile</span></span>
+      <h3>RISC</h3>
+      <p>Risk Incident Sharing and Coordination — account-level events such as compromise, disablement and recovery.</p>
+      <span class="more">13 event types →</span>
+    </a>
+  </div>
+
+  <h2>Start here</h2>
+  <div class="grid">
+    <a class="card" href="/learn/"><h3>Concepts in ten minutes</h3><p>Transmitters, Receivers, streams, SETs and subjects — the whole model on one page.</p></a>
+    <a class="card" href="/events/"><h3>Event catalogue</h3><p>Every CAEP, RISC and SSF event type with its claims and an example token.</p></a>
+    <a class="card" href="/implementations/"><h3>Implementations</h3><p>Products and open-source libraries that transmit or receive shared signals.</p></a>
+    <a class="card" href="/playground/"><h3>Playground</h3><p>A public sample Transmitter and Receiver to test against. Coming soon.</p></a>
+  </div>
+
+  <p class="muted" style="margin-top:3rem;font-size:.9rem">
+    The normative text lives at the <a href={SPEC_URLS.wg}>OpenID Foundation Shared Signals Working Group</a>.
+    This site explains it; when the two disagree, the spec wins.
+  </p>
+</Base>
+
+<style>
+  .hero-fig :global(.b){fill:var(--bg-2);stroke:var(--rule)}
+  .hero-fig :global(.t){fill:var(--ink);font:600 15px var(--sans)}
+  .hero-fig :global(.s){fill:var(--ink-faint);font:400 12px var(--sans)}
+  .hero-fig :global(.m){fill:var(--ink-soft);font:500 11.5px var(--mono)}
+  .hero-fig :global(.l){stroke:var(--accent);stroke-width:2;fill:none}
+  .hero-fig :global(.d){fill:var(--accent)}
+</style>

@@ -1,0 +1,29 @@
+---
+import Base from './Base.astro';
+import { LEARN } from '../consts';
+// Works both as a component layout and as a Markdown `layout:` (which passes frontmatter).
+const { title, description } = (Astro.props.frontmatter ?? Astro.props) as { title: string; description?: string };
+const path = Astro.url.pathname;
+const i = LEARN.findIndex((l) => l.href === path);
+const prev = i > 0 ? LEARN[i - 1] : null;
+const next = i >= 0 && i < LEARN.length - 1 ? LEARN[i + 1] : null;
+---
+<Base title={title} description={description}>
+  <div class="docs">
+    <aside class="sidenav">
+      <nav aria-label="Learn">
+        <h4>Learn SSF</h4>
+        <ul>
+          {LEARN.map((l) => <li><a href={l.href} aria-current={l.href === path ? 'page' : undefined}>{l.label}</a></li>)}
+        </ul>
+      </nav>
+    </aside>
+    <article class="prose">
+      <slot />
+      <nav class="pager" aria-label="Pagination">
+        <span>{prev && <a href={prev.href}>← {prev.label}</a>}</span>
+        <span>{next && <a href={next.href}>{next.label} →</a>}</span>
+      </nav>
+    </article>
+  </div>
+</Base>

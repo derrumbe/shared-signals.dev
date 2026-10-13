@@ -1,0 +1,41 @@
+---
+import Base from '../layouts/Base.astro';
+import { getCollection } from 'astro:content';
+
+const all = (await getCollection('implementations')).map((e) => e.data);
+const order = { 'test-service': 0, product: 1, library: 2 } as const;
+const items = all.sort((a, b) => order[a.kind] - order[b.kind] || a.name.localeCompare(b.name));
+const kindLabel = { product: 'Product', library: 'Library', 'test-service': 'Test service' };
+const profileClass = (p: string) => p.toLowerCase();
+---
+<Base title="Implementations" description="Products, libraries and test services that implement the OpenID Shared Signals Framework, CAEP and RISC.">
+  <p class="eyebrow">Ecosystem</p>
+  <h1>Implementations</h1>
+  <p class="lede">Products that transmit or receive shared signals, open-source libraries for building your own, and test services to develop against.</p>
+
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Name</th><th>Type</th><th>Role</th><th>Profiles</th><th>Notes</th></tr></thead>
+      <tbody>
+        {items.map((i) => (
+          <tr>
+            <td><a href={i.url}><strong>{i.name}</strong></a><br /><span class="muted">{i.vendor}</span></td>
+            <td>{kindLabel[i.kind]}{i.language && <><br /><span class="muted">{i.language}</span></>}</td>
+            <td>{i.roles.map((r) => r[0].toUpperCase() + r.slice(1)).join(' + ')}</td>
+            <td><span class="tags">{i.profiles.map((p) => <span class={`tag ${profileClass(p)}`}>{p}</span>)}</span></td>
+            <td>{i.summary}{i.source && i.source !== i.url && <> <a href={i.source}>Source</a></>}</td>
+          </tr>
+        ))}
+      </tbody>
+    </table>
+  </div>
+
+  <h2 id="add">Add your implementation</h2>
+  <div class="prose">
+    <p>This list is deliberately conservative: an entry appears only when there is public documentation or source
+    showing it speaks SSF, CAEP or RISC. To add or correct one, open a pull request against
+    <code>src/content/implementations/implementations.json</code> with a link to that documentation.</p>
+    <p>Want to prove interoperability? Point your implementation at the <a href="/playground/">shared-signals.dev playground</a>
+    once it launches, or join an <a href="https://openid.net/wg/sharedsignals/">OpenID Shared Signals interop event</a>.</p>
+  </div>
+</Base>

@@ -1,0 +1,10 @@
+---
+// Three arcs radiating from a point: a transmitter broadcasting to receivers.
+const { size = 22 } = Astro.props;
+---
+<svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true">
+  <circle cx="5" cy="19" r="2" fill="currentColor" stroke="none" />
+  <path d="M5 13a6 6 0 0 1 6 6" />
+  <path d="M5 8a11 11 0 0 1 11 11" />
+  <path d="M5 3a16 16 0 0 1 16 16" opacity=".55" />
+</svg>
