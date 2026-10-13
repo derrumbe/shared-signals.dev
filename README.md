@@ -25,7 +25,7 @@ npm run deploy     # build and `wrangler deploy` (or let Workers Builds do it on
 | `worker/index.js` | The Worker. Today: serves `dist/`, returns 501 on the reserved API paths. |
 
 Facts on these pages were checked against the spec sources in
-`github.com/openid/sharedsignals` (SSF/CAEP final, 2025-08-29). When the spec changes, the
+`github.com/openid/sharedsignals` (commit recorded in `SPECS_SYNC`, `src/consts.ts`). Run `npm run check-specs` to list newer spec commits. When the spec changes, the
 event catalogue and Learn pages are what to re-check.
 
 ## Roadmap

@@ -1,6 +1,6 @@
 ---
 import Base from '../layouts/Base.astro';
-import { SPEC_URLS } from '../consts';
+import { SPEC_URLS, SPECS_SYNC } from '../consts';
 const rfcs = [
   ['RFC 8417', 'Security Event Token (SET)', 'The JWT format every SSF event is carried in.', 'https://www.rfc-editor.org/rfc/rfc8417'],
   ['RFC 8935', 'Push-Based SET Delivery Using HTTP', 'Transmitter POSTs SETs to the Receiver.', 'https://www.rfc-editor.org/rfc/rfc8935'],
@@ -42,12 +42,31 @@ const rfcs = [
   </section>
 
   <section id="caep-interop" class="prose">
-    <h2><span class="tag neutral">Draft</span> CAEP Interoperability Profile 1.0</h2>
+    <h2><span class="tag neutral">Draft 01</span> CAEP Interoperability Profile 1.0</h2>
     <p>Narrows the options in SSF and CAEP to a common baseline so independently built Transmitters and Receivers
-    work together out of the box: required discovery fields, delivery methods, subject formats, authorisation,
-    and which event claims must be supported. If you are building something new, start here.</p>
-    <p><a href={SPEC_URLS.caepInterop}>Read the CAEP Interoperability Profile →</a></p>
+    work together out of the box: required discovery fields, push and poll delivery, OAuth with the
+    <code>ssf.read</code> / <code>ssf.manage</code> scopes, <code>email</code> and <code>iss_sub</code> subjects, RS256 signing,
+    and four use cases — session revocation, credential change, device compliance change and (new in the working copy)
+    risk level change. Draft 01 was submitted for OIDF review in July 2026. If you are building something new, start here.</p>
+    <p><a href="/specs/caep-interop/">Our requirements checklist →</a> · <a href={SPEC_URLS.caepInterop}>Draft 01</a> ·
+    <a href={SPEC_URLS.caepInteropEditors}>Working copy</a></p>
   </section>
+
+  <h2 id="status">Status at a glance</h2>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Document</th><th>Status</th><th>Latest</th></tr></thead>
+      <tbody>
+        <tr><td>Shared Signals Framework 1.0</td><td>Final</td><td>2025-08-29 — no changes since</td></tr>
+        <tr><td>CAEP 1.0</td><td>Final</td><td>2025-08-29 — no changes since</td></tr>
+        <tr><td>RISC 1.0</td><td>Final</td><td>2025-08-29 — no changes since</td></tr>
+        <tr><td>CAEP Interoperability Profile 1.0</td><td>Draft 01, in OIDF review</td><td>Draft 01 July 2026; working copy adds Risk Level Change (2026-09-01)</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p class="muted" style="font-size:.85rem">Checked against <a href={SPEC_URLS.github}>openid/sharedsignals</a> @ <code>{SPECS_SYNC.commit}</code> ({SPECS_SYNC.date}) on {SPECS_SYNC.checked}.
+  The repository also holds older, inactive drafts (OAuth Event Types, RISC use cases, subject identifier scenarios) that are not covered here.
+  Working copies of everything are published at <a href={SPEC_URLS.editors}>openid.github.io/sharedsignals</a>.</p>
 
   <h2>Underlying IETF standards</h2>
   <div class="table-wrap">

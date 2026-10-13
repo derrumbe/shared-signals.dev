@@ -68,6 +68,13 @@ Receiver and one already exists, it responds `409 Conflict`.
 | Remove a subject | `POST {remove_subject_endpoint}` |
 | Request verification | `POST {verification_endpoint}` |
 
+### Authorization
+
+SSF itself doesn't mandate an auth scheme, but in practice it is OAuth 2.0. The
+[CAEP Interoperability Profile](/specs/caep-interop/#oauth) fixes the details: bearer tokens in the
+`Authorization` header (never the query string), tokens valid for 60 minutes or less, and two scopes —
+`ssf.read` for reading configuration and status, `ssf.manage` for everything else.
+
 ## Status: enabled, paused, disabled
 
 - **enabled** — events flow.

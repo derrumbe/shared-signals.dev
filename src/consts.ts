@@ -25,7 +25,13 @@ export const SPEC_URLS = {
   ssf: 'https://openid.net/specs/openid-sharedsignals-framework-1_0-final.html',
   caep: 'https://openid.net/specs/openid-caep-1_0-final.html',
   risc: 'https://openid.net/specs/openid-risc-1_0-final.html',
-  caepInterop: 'https://openid.net/specs/openid-caep-interoperability-profile-1_0.html',
+  caepInterop: 'https://openid.net/specs/openid-caep-interoperability-profile-1_0-01.html',
+  caepInteropEditors: 'https://openid.github.io/sharedsignals/openid-caep-interoperability-profile-1_0.html',
+  editors: 'https://openid.github.io/sharedsignals/',
   wg: 'https://openid.net/wg/sharedsignals/',
   github: 'https://github.com/openid/sharedsignals',
 };
+
+// The openid/sharedsignals commit this site's content was last checked against.
+// `npm run check-specs` lists anything newer.
+export const SPECS_SYNC = { commit: 'a34d6ff', date: '2026-09-01', checked: '2026-10-13' };

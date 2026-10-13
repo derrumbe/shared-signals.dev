@@ -59,6 +59,12 @@ need to talk to them may fall back to that path.</p>
 | `critical_subject_members` | — | Complex-subject members the Receiver must understand. |
 | `spec_version` | — | `1_0` for the final spec; absent means the older `1_0-ID1` draft. |
 
+<div class="callout">
+<p><strong>Interop baseline.</strong> The <a href="/specs/caep-interop/">CAEP Interoperability Profile</a> makes
+<code>spec_version</code>, <code>jwks_uri</code>, <code>delivery_methods_supported</code>, <code>configuration_endpoint</code>,
+<code>status_endpoint</code>, <code>verification_endpoint</code> and an OAuth 2.0 <code>authorization_schemes</code> entry mandatory.</p>
+</div>
+
 ## Validate before you trust
 
 - Only fetch discovery from an issuer you got from a trusted source, over `https`.

@@ -1,0 +1,121 @@
+---
+import Base from '../../layouts/Base.astro';
+import { SPEC_URLS, SPECS_SYNC } from '../../consts';
+
+// Requirements transcribed from the CAEP Interoperability Profile 1.0 working copy
+// (openid/sharedsignals @ SPECS_SYNC.commit). Draft 01, submitted for OIDF review in
+// July 2026, is the published snapshot; the working copy adds the Risk Level Change use case.
+const transmitter = [
+  ['Discovery', '`spec_version` present, `1_0` or greater.'],
+  ['Discovery', '`delivery_methods_supported` present.'],
+  ['Discovery', '`jwks_uri` present and resolving to the current signing key(s).'],
+  ['Discovery', '`configuration_endpoint`, `status_endpoint` and `verification_endpoint` present.'],
+  ['Discovery', '`authorization_schemes` includes `{ "spec_urn": "urn:ietf:rfc:6749" }`.'],
+  ['Delivery', 'Accept Create Stream with `delivery.method` of push (`urn:ietf:rfc:8935`) or poll (`urn:ietf:rfc:8936`); always return a `delivery` in the created stream.'],
+  ['Streams', 'Support Create, Read Configuration, Read Status, Verification (and send the Verification event), and Delete.'],
+  ['Subjects', 'Send events using at least one of `email`, `iss_sub` (and `opaque` for Verification events).'],
+  ['Signing', 'Sign every SET with `RS256`, keys of at least 2048 bits.'],
+  ['SETs', 'Exactly one event in each SET’s `events` claim.'],
+  ['OAuth', 'Accept bearer tokens in the `Authorization` header; reject tokens in query parameters (RFC 6750 §2.3).'],
+  ['OAuth', 'Validate token integrity, expiry and revocation, check the token grants enough access, and return RFC 6750 §3.1 errors when it doesn’t.'],
+  ['TLS', 'TLS 1.2 or later on every endpoint and outbound connection; follow RFC 9325.'],
+];
+const receiver = [
+  ['Delivery', 'Accept events by push (RFC 8935) or poll (RFC 8936) — at least one.'],
+  ['Delivery', 'Create Stream with `delivery.method` of push or poll, or omit `delivery` (which means poll).'],
+  ['Keys', 'Fetch the Transmitter’s signing keys from `jwks_uri`.'],
+  ['OAuth', 'Use OAuth 2.0 for every Stream Management API call.'],
+  ['Subjects', 'Assume every subject is in the stream — no Add Subject calls required.'],
+  ['Subjects', 'Accept events whose subject is `email`, `iss_sub` or `opaque`.'],
+  ['Streams', 'Be able to Create, Read Configuration, Read Status, request Verification (and process the Verification event), and Delete.'],
+  ['TLS', 'Fully validate the Transmitter’s TLS certificate (chain, expiry, revocation) per RFC 6125.'],
+];
+const useCases = [
+  { name: 'Session Revocation / Logout', event: 'session-revoked', fields: [] as string[][], draft01: true },
+  { name: 'Credential Change', event: 'credential-change', fields: [['change_type', 'All values'], ['credential_type', 'All values']], draft01: true },
+  { name: 'Device Compliance Change', event: 'device-compliance-change', fields: [['previous_status', 'All values'], ['current_status', 'All values']], draft01: true },
+  { name: 'Risk Level Change', event: 'risk-level-change', fields: [['principal', 'All values'], ['current_level', 'LOW, MEDIUM, HIGH'], ['previous_level', 'All values; absent = unknown']], draft01: false },
+];
+const md = (s: string) => s.replace(/`([^`]+)`/g, '<code>$1</code>');
+---
+<Base title="CAEP Interoperability Profile" description="A checklist of what the CAEP Interoperability Profile 1.0 requires of SSF Transmitters and Receivers: discovery, delivery, OAuth scopes, subjects, signing and use cases.">
+  <p class="eyebrow"><a href="/specs/">Specs</a> · CAEP Interoperability Profile 1.0</p>
+  <h1>CAEP Interoperability Profile</h1>
+  <p class="lede">SSF and CAEP leave many choices open. The Interoperability Profile picks one baseline, so a Transmitter and a
+  Receiver built by different teams can connect without negotiating first. If you are building something new, build to this.</p>
+
+  <div class="callout prose">
+    <p><strong>Status.</strong> <a href={SPEC_URLS.caepInterop}>Draft 01</a> was submitted for OpenID Foundation review in July 2026.
+    The <a href={SPEC_URLS.caepInteropEditors}>working copy</a> has since added the Risk Level Change use case (September 2026).
+    This page follows the working copy and marks what is new since draft 01.</p>
+  </div>
+
+  <h2>What it profiles</h2>
+  <p class="prose">Shared Signals Framework 1.0, CAEP 1.0 and OAuth 2.0. To conform, an implementation must meet the
+  common requirements below <strong>and support at least one</strong> of the <a href="#use-cases">use cases</a>.
+  (Earlier drafts said implementations <em>may</em> pick use cases; draft 01 made at least one mandatory.)</p>
+
+  <h2 id="transmitters">Transmitter checklist</h2>
+  <div class="table-wrap"><table>
+    <thead><tr><th style="width:7rem">Area</th><th>Requirement (MUST)</th></tr></thead>
+    <tbody>{transmitter.map(([a, r]) => <tr><td class="muted">{a}</td><td set:html={md(r)} /></tr>)}</tbody>
+  </table></div>
+
+  <h2 id="receivers">Receiver checklist</h2>
+  <div class="table-wrap"><table>
+    <thead><tr><th style="width:7rem">Area</th><th>Requirement (MUST)</th></tr></thead>
+    <tbody>{receiver.map(([a, r]) => <tr><td class="muted">{a}</td><td set:html={md(r)} /></tr>)}</tbody>
+  </table></div>
+
+  <h2 id="oauth">OAuth</h2>
+  <div class="prose">
+    <p>The roles map directly: the <strong>Transmitter is the resource server</strong>, the <strong>Receiver is the client</strong>,
+    and the authorization server is anything the Transmitter trusts to issue tokens — it doesn't have to be the Transmitter
+    itself. How the Receiver finds that authorization server is out of scope; it <em>may</em> publish RFC 8414 metadata.</p>
+    <ul>
+      <li>Tokens are issued with the <strong>client credentials</strong> grant or the <strong>authorization code</strong> grant (at least one).</li>
+      <li>Access tokens must be <strong>short-lived: 60 minutes or less</strong>.</li>
+    </ul>
+    <h3>Scopes</h3>
+    <p>Scope names starting with <code>ssf.</code> are reserved for the SSF specifications. Authorization servers issuing tokens
+    to Receivers must support two:</p>
+  </div>
+  <div class="table-wrap"><table>
+    <thead><tr><th>Scope</th><th>Allows</th></tr></thead>
+    <tbody>
+      <tr><td><code>ssf.read</code></td><td>Read Stream Configuration, Read Stream Status</td></tr>
+      <tr><td><code>ssf.manage</code></td><td>Everything in <code>ssf.read</code>, plus Create Stream, Delete Stream and Stream Verification</td></tr>
+    </tbody>
+  </table></div>
+  <p class="muted prose" style="font-size:.9rem">Earlier drafts had Receivers discover scopes through OAuth Protected Resource Metadata (RFC 9728) when it was available.
+  Draft 01 dropped that, so the two fixed scopes are now the only mechanism.</p>
+
+  <h2 id="use-cases">Use cases</h2>
+  <p class="prose">Support at least one. In every one, Transmitters <strong>must</strong> populate <code>reason_admin</code> with a
+  non-empty object (a localised message map, e.g. <code>{`{"en": "Policy violation"}`}</code>). Receivers must understand every allowed value of the listed fields;
+  Transmitters may send any of them.</p>
+  <div class="grid">
+    {useCases.map((u) => (
+      <div class="card">
+        <span class="tags">
+          <span class="tag caep">CAEP</span>
+          {!u.draft01 && <span class="tag risc">New since draft 01</span>}
+        </span>
+        <h3>{u.name}</h3>
+        <p><a href={`/events/#caep-${u.event}`}><code>{u.event}</code></a></p>
+        <ul style="margin:.3rem 0 0;padding-left:1.1rem;font-size:.9rem;color:var(--ink-soft)">
+          {u.fields.map(([f, v]) => <li><code>{f}</code>: {v}</li>)}
+          <li><code>reason_admin</code>: required, non-empty object</li>
+        </ul>
+      </div>
+    ))}
+  </div>
+
+  <h2>Read the source</h2>
+  <ul class="prose">
+    <li><a href={SPEC_URLS.caepInterop}>Draft 01 on openid.net</a></li>
+    <li><a href={SPEC_URLS.caepInteropEditors}>Working copy (editor's draft)</a></li>
+    <li><a href={`${SPEC_URLS.github}/blob/main/openid-caep-interoperability-profile-1_0.md`}>Markdown source and history on GitHub</a></li>
+  </ul>
+  <p class="muted" style="font-size:.85rem">Checked against openid/sharedsignals @ <code>{SPECS_SYNC.commit}</code> ({SPECS_SYNC.date}).</p>
+</Base>

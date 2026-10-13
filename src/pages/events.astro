@@ -3,6 +3,7 @@ import Base from '../layouts/Base.astro';
 import { Code } from 'astro:components';
 import { EVENTS, uri } from '../data/events';
 import { SPEC_URLS } from '../consts';
+const INTEROP = new Set(['session-revoked', 'credential-change', 'device-compliance-change', 'risk-level-change']);
 
 const groups = [
   { id: 'caep', title: 'CAEP events', spec: SPEC_URLS.caep, blurb: 'Session and access-condition changes while a user is signed in.' },
@@ -30,10 +31,12 @@ const groups = [
             <span class={`tag ${e.spec}`}>{e.spec}</span>
             <strong>{e.name}</strong>
             {e.deprecated && <span class="tag neutral">deprecated</span>}
+            {e.spec === 'caep' && INTEROP.has(e.slug) && <span class="tag ssf">interop profile</span>}
             <span class="muted ev-sum">{e.summary}</span>
           </summary>
           <div class="ev-body">
             {e.deprecated && <p class="callout">{e.deprecated}</p>}
+            {e.spec === 'caep' && INTEROP.has(e.slug) && <p class="callout">A use case in the <a href="/specs/caep-interop/#use-cases">CAEP Interoperability Profile</a>: Transmitters must include a non-empty <code>reason_admin</code>, and Receivers must handle every allowed value of this event’s fields.</p>}
             <p><code>{uri(e)}</code></p>
             {e.claims.length > 0 ? (
               <div class="table-wrap"><table>
@@ -54,7 +57,7 @@ const groups = [
   .event summary::-webkit-details-marker{display:none}
   .event summary strong{font-weight:600}
   .event summary .ev-sum{grid-column:2;font-size:.92rem}
-  .event summary .tag.neutral{grid-column:2;justify-self:start}
+  .event summary .tag.neutral,.event summary .tag.ssf{grid-column:2;justify-self:start}
   .event[open]{border-color:var(--accent)}
   .ev-body{margin-top:.8rem;min-width:0}
   .ev-body code{overflow-wrap:anywhere}

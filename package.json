@@ -8,7 +8,8 @@
     "build": "astro build",
     "preview": "npm run build && wrangler dev",
     "check": "astro check",
-    "deploy": "npm run build && wrangler deploy"
+    "deploy": "npm run build && wrangler deploy",
+    "check-specs": "bash scripts/check-specs.sh"
   },
   "dependencies": {
     "astro": "^5.6.0",
