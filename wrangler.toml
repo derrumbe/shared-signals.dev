@@ -10,6 +10,9 @@
 name = "shared-signals-dev"
 main = "worker/index.js"
 compatibility_date = "2026-01-01"
+# Served only on shared-signals.dev (custom domain set in the dashboard), not on
+# *.workers.dev, so there is one canonical address.
+workers_dev = false
 
 [assets]
 directory = "./dist"
