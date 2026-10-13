@@ -6,9 +6,200 @@
     "kind": "test-service",
     "roles": ["transmitter", "receiver"],
     "profiles": ["SSF", "CAEP"],
+    "delivery": ["push", "poll"],
     "url": "https://caep.dev/",
     "source": "https://github.com/SGNL-ai/caep.dev",
-    "summary": "Public test Transmitter and Receiver for trying CAEP events against your own implementation."
+    "summary": "Public test Transmitter and Receiver for trying CAEP events against your own implementation.",
+    "interop": ["texas-2024", "authenticate-2025"]
+  },
+  {
+    "id": "sailpoint",
+    "name": "Identity Security Cloud",
+    "vendor": "SailPoint",
+    "kind": "product",
+    "roles": ["transmitter", "receiver"],
+    "profiles": ["SSF", "CAEP"],
+    "delivery": ["push", "poll"],
+    "url": "https://documentation.sailpoint.com/saas/help/shared_signals/",
+    "summary": "Receives session-revoked, credential-change, token-claims-change, device-compliance-change and risk-level-change events and acts on them with Workflows; transmits session-revoked when an identity's lifecycle state changes.",
+    "interop": ["london-2024", "texas-2024", "london-2025", "authenticate-2025"]
+  },
+  {
+    "id": "okta",
+    "name": "Identity Threat Protection",
+    "vendor": "Okta",
+    "kind": "product",
+    "roles": ["transmitter", "receiver"],
+    "profiles": ["SSF", "CAEP", "RISC"],
+    "delivery": ["push"],
+    "url": "https://help.okta.com/oie/en-us/Content/Topics/itp/shared-signals.htm",
+    "source": "https://developer.okta.com/docs/api/openapi/okta-management/management/tag/SSFTransmitter/",
+    "summary": "Receives CAEP and RISC signals from security vendors and feeds them into entity risk policy (session revocation, Universal Logout, Workflows); transmits session-revoked and credential-change.",
+    "interop": ["london-2024", "texas-2024", "london-2025", "authenticate-2025"]
+  },
+  {
+    "id": "sgnl-caep-hub",
+    "name": "CAEP Hub",
+    "vendor": "SGNL",
+    "kind": "product",
+    "roles": ["transmitter", "receiver"],
+    "profiles": ["SSF", "CAEP"],
+    "delivery": ["push"],
+    "url": "https://help.sgnl.ai/articles/systems-of-record/creating-and-configuring-ssfevents-caep/",
+    "summary": "SGNL's access-management platform as both SSF Transmitter and Receiver; ingests CAEP events as a real-time system of record for access decisions.",
+    "interop": ["london-2024", "texas-2024", "authenticate-2025"]
+  },
+  {
+    "id": "google-workspace-ssf",
+    "name": "Google Workspace Shared Signals (closed beta)",
+    "vendor": "Google",
+    "kind": "product",
+    "roles": ["transmitter", "receiver"],
+    "profiles": ["SSF", "CAEP"],
+    "delivery": ["push", "poll"],
+    "url": "https://developers.google.com/workspace/shared-signals/api/ssf-api",
+    "summary": "SSF integration for Google Workspace. Interop results: Receiver by poll (Dec 2024), Transmitter by push against the final specs (Oct 2025).",
+    "interop": ["texas-2024", "london-2025", "authenticate-2025"]
+  },
+  {
+    "id": "google-risc",
+    "name": "Cross-Account Protection (RISC)",
+    "vendor": "Google",
+    "kind": "product",
+    "roles": ["transmitter"],
+    "profiles": ["RISC"],
+    "url": "https://developers.google.com/identity/protocols/risc",
+    "summary": "Google sends RISC security events about Google Accounts to apps that use Sign in with Google."
+  },
+  {
+    "id": "ibm-verify-antenna",
+    "name": "Verify Antenna",
+    "vendor": "IBM",
+    "kind": "product",
+    "roles": ["transmitter", "receiver"],
+    "profiles": ["SSF", "CAEP"],
+    "delivery": ["push", "poll"],
+    "url": "https://www.ibm.com/docs/en/SSCT62/concepts/c_antenna.html",
+    "summary": "A lightweight, self-hosted container for IBM Verify that exchanges security events and risk signals using SSF.",
+    "interop": ["texas-2024", "london-2025", "authenticate-2025"]
+  },
+  {
+    "id": "cisco",
+    "name": "Cisco (Duo)",
+    "vendor": "Cisco",
+    "kind": "product",
+    "roles": ["transmitter", "receiver"],
+    "profiles": ["SSF", "CAEP"],
+    "delivery": ["push"],
+    "url": "https://duo.com/blog/defending-against-identity-based-threats-using-the-shared-signals-framework",
+    "source": "https://sharedsignals.guide/",
+    "summary": "Cisco demonstrated push Transmitter and Receiver interop (SGNL's write-up names Cisco Duo). Cisco also runs sharedsignals.guide, a developer guide to SSF.",
+    "interop": ["london-2024", "texas-2024"]
+  },
+  {
+    "id": "jamf",
+    "name": "Jamf Security Cloud",
+    "vendor": "Jamf",
+    "kind": "product",
+    "roles": ["transmitter"],
+    "profiles": ["SSF", "CAEP"],
+    "delivery": ["push"],
+    "url": "https://developer.jamf.com/jamf-security/docs/shared-signals-framework-and-continuous-access-evaluation-protocol",
+    "summary": "Transmits device-compliance-change and risk events for managed Apple devices; documented integrations with Okta and SailPoint.",
+    "interop": ["texas-2024", "authenticate-2025"]
+  },
+  {
+    "id": "omnissa",
+    "name": "Omnissa",
+    "vendor": "Omnissa",
+    "kind": "product",
+    "roles": ["transmitter"],
+    "profiles": ["SSF", "CAEP"],
+    "delivery": ["push"],
+    "url": "https://openid.net/top-firms-test-interoperability-of-final-ssf-and-caep/",
+    "summary": "Push Transmitter in OIDF interop results. No public SSF documentation found yet; link goes to the interop results.",
+    "interop": ["texas-2024", "london-2025", "authenticate-2025"]
+  },
+  {
+    "id": "thales",
+    "name": "Thales",
+    "vendor": "Thales",
+    "kind": "product",
+    "roles": ["receiver"],
+    "profiles": ["SSF", "CAEP"],
+    "delivery": ["push"],
+    "url": "https://openid.net/shared-signals-interoperability-at-gartner-iam/",
+    "summary": "Push Receiver in OIDF interop results. No public SSF product documentation found yet; link goes to the interop results.",
+    "interop": ["texas-2024", "london-2025"]
+  },
+  {
+    "id": "appomni",
+    "name": "AppOmni",
+    "vendor": "AppOmni",
+    "kind": "product",
+    "roles": ["transmitter"],
+    "profiles": ["SSF", "CAEP"],
+    "delivery": ["push"],
+    "url": "https://openid.net/shared-signals-interoperability-at-gartner-iam/",
+    "summary": "SaaS security; push Transmitter in OIDF interop results. No public SSF documentation found yet; link goes to the interop results.",
+    "interop": ["texas-2024"]
+  },
+  {
+    "id": "saviynt",
+    "name": "Saviynt",
+    "vendor": "Saviynt",
+    "kind": "product",
+    "roles": ["receiver"],
+    "profiles": ["SSF", "CAEP"],
+    "delivery": ["poll"],
+    "url": "https://openid.net/shared-signals-interoperability-at-gartner-iam/",
+    "summary": "Identity governance; poll Receiver in OIDF interop results. No public SSF documentation found yet; link goes to the interop results.",
+    "interop": ["texas-2024"]
+  },
+  {
+    "id": "delinea",
+    "name": "Delinea",
+    "vendor": "Delinea",
+    "kind": "product",
+    "roles": ["transmitter", "receiver"],
+    "profiles": ["SSF", "CAEP"],
+    "delivery": ["push", "poll"],
+    "url": "https://openid.net/shared-signals-interoperability-at-gartner-iam/",
+    "summary": "Privileged access; Transmitter and Receiver in OIDF interop results. No public SSF documentation found yet; link goes to the interop results.",
+    "interop": ["texas-2024"]
+  },
+  {
+    "id": "winmagic",
+    "name": "WinMagic",
+    "vendor": "WinMagic",
+    "kind": "product",
+    "roles": ["transmitter", "receiver"],
+    "profiles": ["SSF", "CAEP"],
+    "url": "https://openid.net/shared-signals-interoperability-at-gartner-iam/",
+    "summary": "Endpoint authentication; Transmitter (push and poll) and push Receiver in OIDF interop results. No public SSF documentation found yet; link goes to the interop results.",
+    "interop": ["texas-2024"]
+  },
+  {
+    "id": "vericlouds",
+    "name": "VeriClouds",
+    "vendor": "VeriClouds",
+    "kind": "product",
+    "roles": ["transmitter"],
+    "profiles": ["SSF", "RISC"],
+    "url": "https://www.vericlouds.com/",
+    "summary": "Compromised-credential intelligence; has demonstrated an SSF Transmitter for the RISC credential-compromise event. VeriClouds contributed to the RISC specification.",
+    "interop": ["london-2024"]
+  },
+  {
+    "id": "helisoft",
+    "name": "Helisoft",
+    "vendor": "Helisoft",
+    "kind": "product",
+    "roles": ["transmitter"],
+    "profiles": ["SSF", "CAEP"],
+    "url": "https://sgnl.ai/2024/04/sgnl-demonstrates-standards-based-interoperability-with-okta-cisco-sailpoint-and-helisoft",
+    "summary": "Transmitted CAEP events to SGNL at the first interop event. No public SSF documentation found yet; link goes to SGNL's write-up.",
+    "interop": ["london-2024"]
   },
   {
     "id": "sgnl-secevent",
@@ -19,7 +210,6 @@
     "profiles": ["SSF", "CAEP", "RISC"],
     "language": "Go",
     "url": "https://github.com/SGNL-ai/caep.dev/tree/main/secevent",
-    "source": "https://github.com/SGNL-ai/caep.dev/tree/main/secevent",
     "summary": "Build, sign, parse and validate Security Event Tokens (RFC 8417)."
   },
   {
@@ -31,7 +221,6 @@
     "profiles": ["SSF"],
     "language": "Go",
     "url": "https://github.com/SGNL-ai/caep.dev/tree/main/ssfreceiver",
-    "source": "https://github.com/SGNL-ai/caep.dev/tree/main/ssfreceiver",
     "summary": "Library for building SSF Receivers: discovery, stream management and event handling."
   },
   {
@@ -44,17 +233,6 @@
     "delivery": ["push", "poll"],
     "language": "Go",
     "url": "https://github.com/mike-kiser-sp/receiver",
-    "source": "https://github.com/mike-kiser-sp/receiver",
     "summary": "A Go Shared Signals Receiver supporting push and poll delivery, stream status, and typed CAEP events."
-  },
-  {
-    "id": "google-risc",
-    "name": "Cross-Account Protection (RISC)",
-    "vendor": "Google",
-    "kind": "product",
-    "roles": ["transmitter"],
-    "profiles": ["RISC"],
-    "url": "https://developers.google.com/identity/protocols/risc",
-    "summary": "Google sends RISC security events about Google Accounts to apps that use Sign in with Google."
   }
 ]

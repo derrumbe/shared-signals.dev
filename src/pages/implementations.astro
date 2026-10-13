@@ -1,41 +1,87 @@
 ---
 import Base from '../layouts/Base.astro';
 import { getCollection } from 'astro:content';
+import { INTEROP_EVENTS, type InteropEventId } from '../data/interop';
 
 const all = (await getCollection('implementations')).map((e) => e.data);
-const order = { 'test-service': 0, product: 1, library: 2 } as const;
-const items = all.sort((a, b) => order[a.kind] - order[b.kind] || a.name.localeCompare(b.name));
-const kindLabel = { product: 'Product', library: 'Library', 'test-service': 'Test service' };
-const profileClass = (p: string) => p.toLowerCase();
+// Most interop appearances first, so the most-tested products lead.
+const byName = (a: { name: string; vendor: string }, b: { name: string; vendor: string }) =>
+  (a.vendor + a.name).localeCompare(b.vendor + b.name);
+const groups = [
+  { title: 'Products', items: all.filter((i) => i.kind === 'product').sort((a, b) => (b.interop?.length ?? 0) - (a.interop?.length ?? 0) || byName(a, b)) },
+  { title: 'Test services', items: all.filter((i) => i.kind === 'test-service').sort(byName) },
+  { title: 'Libraries', items: all.filter((i) => i.kind === 'library').sort(byName) },
+];
+const events = Object.entries(INTEROP_EVENTS) as [InteropEventId, (typeof INTEROP_EVENTS)[InteropEventId]][];
+const cap = (s: string) => s[0].toUpperCase() + s.slice(1);
 ---
-<Base title="Implementations" description="Products, libraries and test services that implement the OpenID Shared Signals Framework, CAEP and RISC.">
+<Base title="Implementations" description="Products, libraries and test services that implement the OpenID Shared Signals Framework, CAEP and RISC, including every participant in OpenID Foundation interop events.">
   <p class="eyebrow">Ecosystem</p>
   <h1>Implementations</h1>
-  <p class="lede">Products that transmit or receive shared signals, open-source libraries for building your own, and test services to develop against.</p>
+  <p class="lede">Products that transmit or receive shared signals, open-source libraries for building your own, and test services
+  to develop against — including every implementation demonstrated at an OpenID Foundation interop event.</p>
 
+  {groups.map((g) => g.items.length > 0 && (
+    <section>
+      <h2>{g.title}</h2>
+      <div class="table-wrap">
+        <table class="impl">
+          <thead><tr><th>Name</th><th>Role</th><th>Profiles</th><th>Interop</th><th>Notes</th></tr></thead>
+          <tbody>
+            {g.items.map((i) => (
+              <tr>
+                <td>
+                  <a href={i.url}><strong>{i.name}</strong></a>
+                  {i.name !== i.vendor && <><br /><span class="muted">{i.vendor}</span></>}
+                  {i.language && <><br /><span class="muted">{i.language}</span></>}
+                </td>
+                <td>
+                  {i.roles.map(cap).join(' + ')}
+                  {i.delivery && <><br /><span class="muted">{i.delivery.join(' + ')}</span></>}
+                </td>
+                <td><span class="tags">{i.profiles.map((p) => <span class={`tag ${p.toLowerCase()}`}>{p}</span>)}</span></td>
+                <td>
+                  <span class="tags">
+                    {(i.interop ?? []).map((e) => <a class="tag neutral" href={INTEROP_EVENTS[e].url} title={INTEROP_EVENTS[e].label}>{INTEROP_EVENTS[e].short}</a>)}
+                  </span>
+                </td>
+                <td>{i.summary}{i.source && <> <a href={i.source}>More</a></>}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </section>
+  ))}
+
+  <h2 id="interop">OpenID Foundation interop events</h2>
+  <div class="prose">
+    <p>The Shared Signals Working Group runs live interoperability sessions where implementers connect their Transmitters and Receivers
+    to each other in front of an audience. Participants must first pass the OpenID conformance tests. Roles and push/poll columns above
+    come from the published results; where no table was published, roles come from the vendor's own documentation.</p>
+  </div>
   <div class="table-wrap">
     <table>
-      <thead><tr><th>Name</th><th>Type</th><th>Role</th><th>Profiles</th><th>Notes</th></tr></thead>
+      <thead><tr><th>Event</th><th>Notes</th></tr></thead>
       <tbody>
-        {items.map((i) => (
-          <tr>
-            <td><a href={i.url}><strong>{i.name}</strong></a><br /><span class="muted">{i.vendor}</span></td>
-            <td>{kindLabel[i.kind]}{i.language && <><br /><span class="muted">{i.language}</span></>}</td>
-            <td>{i.roles.map((r) => r[0].toUpperCase() + r.slice(1)).join(' + ')}</td>
-            <td><span class="tags">{i.profiles.map((p) => <span class={`tag ${profileClass(p)}`}>{p}</span>)}</span></td>
-            <td>{i.summary}{i.source && i.source !== i.url && <> <a href={i.source}>Source</a></>}</td>
-          </tr>
-        ))}
+        {events.map(([, e]) => <tr><td><a href={e.url}>{e.label}</a></td><td>{e.note}</td></tr>)}
       </tbody>
     </table>
   </div>
 
   <h2 id="add">Add your implementation</h2>
   <div class="prose">
-    <p>This list is deliberately conservative: an entry appears only when there is public documentation or source
-    showing it speaks SSF, CAEP or RISC. To add or correct one, open a pull request against
-    <code>src/content/implementations/implementations.json</code> with a link to that documentation.</p>
-    <p>Want to prove interoperability? Point your implementation at the <a href="/playground/">shared-signals.dev playground</a>
-    once it launches, or join an <a href="https://openid.net/wg/sharedsignals/">OpenID Shared Signals interop event</a>.</p>
+    <p>An entry needs public evidence that it speaks SSF, CAEP or RISC — product documentation, source code, or an
+    OpenID interop result. To add or correct one, open a pull request against
+    <a href="https://github.com/derrumbe/shared-signals.dev/blob/main/src/content/implementations/implementations.json"><code>implementations.json</code></a>.
+    Vendors listed here only through an interop result: a link to your SSF documentation is especially welcome.</p>
   </div>
 </Base>
+
+<style>
+  .impl td:nth-child(1){min-width:10rem}
+  .impl td:nth-child(2){white-space:nowrap}
+  .impl td:nth-child(5){min-width:16rem}
+  a.tag{text-decoration:none}
+  a.tag:hover{color:var(--accent)}
+</style>

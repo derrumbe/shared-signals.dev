@@ -3,8 +3,8 @@ import Base from '../../layouts/Base.astro';
 import { SPEC_URLS, SPECS_SYNC } from '../../consts';
 
 // Requirements transcribed from the CAEP Interoperability Profile 1.0 working copy
-// (openid/sharedsignals @ SPECS_SYNC.commit). Draft 01, submitted for OIDF review in
-// July 2026, is the published snapshot; the working copy adds the Risk Level Change use case.
+// (openid/sharedsignals @ SPECS_SYNC.commit). Draft 01 (July 2026) is the published snapshot
+// proposed as Final; the working copy adds the Risk Level Change use case.
 const transmitter = [
   ['Discovery', '`spec_version` present, `1_0` or greater.'],
   ['Discovery', '`delivery_methods_supported` present.'],
@@ -45,8 +45,11 @@ const md = (s: string) => s.replace(/`([^`]+)`/g, '<code>$1</code>');
   Receiver built by different teams can connect without negotiating first. If you are building something new, build to this.</p>
 
   <div class="callout prose">
-    <p><strong>Status.</strong> <a href={SPEC_URLS.caepInterop}>Draft 01</a> was submitted for OpenID Foundation review in July 2026.
-    The <a href={SPEC_URLS.caepInteropEditors}>working copy</a> has since added the Risk Level Change use case (September 2026).
+    <p><strong>Status.</strong> <a href={SPEC_URLS.caepInterop}>Draft 01</a> was put to a 60-day public review as a proposed
+    Final Specification on July 27, 2026. On September 15, 2026 the working group
+    <a href="https://openid.net/public-review-period-for-proposed-openid-caep-interoperbility-profile-final-specification/">agreed to revise it in response to review feedback</a>
+    and restart the review, so the planned vote did not happen; a new timeline is still to be announced.
+    The <a href={SPEC_URLS.caepInteropEditors}>working copy</a> has meanwhile added the Risk Level Change use case.
     This page follows the working copy and marks what is new since draft 01.</p>
   </div>
 

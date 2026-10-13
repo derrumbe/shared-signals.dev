@@ -1,8 +1,11 @@
 import { defineCollection, z } from 'astro:content';
 import { file } from 'astro/loaders';
+import { INTEROP_EVENTS } from './data/interop';
+
+const interopIds = Object.keys(INTEROP_EVENTS) as [keyof typeof INTEROP_EVENTS, ...(keyof typeof INTEROP_EVENTS)[]];
 
 // One entry per product or library. Schema-checked at build time, so a typo in
-// `roles` or `kind` fails the build instead of rendering wrong.
+// `roles`, `kind` or an interop event id fails the build instead of rendering wrong.
 const implementations = defineCollection({
   loader: file('src/content/implementations/implementations.json'),
   schema: z.object({
@@ -17,6 +20,8 @@ const implementations = defineCollection({
     url: z.string().url(),
     source: z.string().url().optional(),
     summary: z.string(),
+    // OpenID Foundation interop events this implementation took part in.
+    interop: z.array(z.enum(interopIds)).optional(),
   }),
 });
 
