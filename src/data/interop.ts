@@ -17,7 +17,7 @@ export const INTEROP_EVENTS = {
     label: 'Gartner IAM London, Mar 2025',
     short: 'LON ’25',
     url: 'https://www.okta.com/blog/product-innovation/okta-leads-the-way-driving-real-time-security-with-shared-signals/',
-    note: 'OIDF published no participant list; participants are as named in Okta’s write-up, which may be partial.',
+    note: 'OIDF published no participant list; participants are compiled from Okta’s write-up and participant confirmations, and may be partial.',
   },
   'authenticate-2025': {
     label: 'Authenticate 2025, Carlsbad CA, Oct 2025',

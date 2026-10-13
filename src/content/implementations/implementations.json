@@ -47,7 +47,7 @@
     "delivery": ["push"],
     "url": "https://help.sgnl.ai/articles/systems-of-record/creating-and-configuring-ssfevents-caep/",
     "summary": "SGNL's access-management platform as both SSF Transmitter and Receiver; ingests CAEP events as a real-time system of record for access decisions.",
-    "interop": ["london-2024", "texas-2024", "authenticate-2025"]
+    "interop": ["london-2024", "texas-2024", "london-2025", "authenticate-2025"]
   },
   {
     "id": "google-workspace-ssf",
