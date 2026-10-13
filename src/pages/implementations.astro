@@ -4,11 +4,12 @@ import { getCollection } from 'astro:content';
 import { INTEROP_EVENTS, type InteropEventId } from '../data/interop';
 
 const all = (await getCollection('implementations')).map((e) => e.data);
-// Most interop appearances first, so the most-tested products lead.
+// Alphabetical by vendor, then product, within each group. Deliberately neutral: interop
+// attendance shows in the badges rather than in the ranking.
 const byName = (a: { name: string; vendor: string }, b: { name: string; vendor: string }) =>
   (a.vendor + a.name).localeCompare(b.vendor + b.name);
 const groups = [
-  { title: 'Products', items: all.filter((i) => i.kind === 'product').sort((a, b) => (b.interop?.length ?? 0) - (a.interop?.length ?? 0) || byName(a, b)) },
+  { title: 'Products', items: all.filter((i) => i.kind === 'product').sort(byName) },
   { title: 'Test services', items: all.filter((i) => i.kind === 'test-service').sort(byName) },
   { title: 'Libraries', items: all.filter((i) => i.kind === 'library').sort(byName) },
 ];
