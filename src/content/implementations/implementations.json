@@ -32,7 +32,7 @@
     "kind": "product",
     "roles": ["transmitter", "receiver"],
     "profiles": ["SSF", "CAEP"],
-    "delivery": ["push", "poll"],
+    "delivery": ["push"],
     "url": "https://documentation.sailpoint.com/saas/help/shared_signals/",
     "summary": "Receives session-revoked, credential-change, token-claims-change, device-compliance-change and risk-level-change events and acts on them with Workflows; transmits session-revoked when an identity's lifecycle state changes.",
     "interop": ["london-2024", "texas-2024", "london-2025", "authenticate-2025"]

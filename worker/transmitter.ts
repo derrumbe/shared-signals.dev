@@ -39,7 +39,7 @@ type Config = {
 };
 type Stream = { config: Config; status: Status; reason?: string; removed: unknown[]; added: unknown[]; lastVerify: number; lastActivity: number; created: number };
 type Queued = { jti: string; set: string; type: string; held: boolean; attempts: number; nextAt: number };
-type LogEntry = { at: number; action: string; ok: boolean; jti?: string; event?: string; detail?: string; set?: string };
+type LogEntry = { at: number; action: string; ok: boolean; jti?: string; event?: string; detail?: string; set?: string; response?: { status: number; body: unknown } };
 type Meta = { revokedBefore: number; fireWindow: number; fireCount: number };
 
 const now = () => Math.floor(Date.now() / 1000);
@@ -458,6 +458,10 @@ export class Transmitter extends DurableObject<Env> {
     }
 
     const snippet = text.slice(0, 300);
+    // What the Receiver answered, kept with the log entry so the playground can show it.
+    let parsed: unknown = snippet || null;
+    try { if (text) parsed = JSON.parse(text); } catch {}
+    const response = status ? { status, body: parsed } : undefined;
     let ok = false, retry = false, detail: string;
     if (status === 202) { ok = true; detail = `202 Accepted from ${d.endpoint_url}`; }
     else if (status >= 200 && status < 300) { ok = true; detail = `${status} from ${d.endpoint_url} (RFC 8935 expects 202 Accepted)`; }
@@ -476,7 +480,7 @@ export class Transmitter extends DurableObject<Env> {
       const q = await this.queue(id);
       if (q.some((x) => x.jti === e.jti)) await this.ctx.storage.put(`queue:${id}`, q.filter((x) => x.jti !== e.jti));
     }
-    await this.log(id, { action: ok ? 'pushed' : retry ? 'push failed, will retry' : 'push failed', ok, jti: e.jti, event: e.type, detail, set: e.set });
+    await this.log(id, { action: ok ? 'pushed' : retry ? 'push failed, will retry' : 'push failed', ok, jti: e.jti, event: e.type, detail, set: e.set, response });
     return { ok, retry, detail };
   }
 

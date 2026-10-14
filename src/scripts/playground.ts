@@ -76,7 +76,10 @@ export type EventRow = {
   via?: string; // stream name, already escaped HTML
   outcome?: string; // short, plain text
   detail?: string; // longer explanation, plain text
-  response?: unknown; // receiver: the response body it sent
+  response?: unknown; // the Receiver's response body (sent, or received)
+  responseLabel?: string;
+  /** Checks are fetched when the row is opened (see fillChecks); render a slot for them. */
+  lazyChecks?: boolean;
   checks?: Check[];
   set?: string;
   header?: unknown;
@@ -91,8 +94,8 @@ export function eventRow(r: EventRow): string {
   const what = r.eventType ? `<code>${esc(r.eventType.split('/').pop())}</code>` : `<strong>${esc(r.title ?? '')}</strong>`;
   const body = [
     r.detail ? `<p style="margin:.4rem 0 0;font-size:.9rem;word-break:break-word">${esc(r.detail)}</p>` : '',
-    r.response ? sub('Response body', pretty(r.response)) : '',
-    r.checks?.length ? checksTray(r.checks) : '',
+    r.response !== undefined ? sub(r.responseLabel ?? 'Response body', r.response === null ? '<p class="muted" style="margin:.2rem 0 0;font-size:.88rem">(empty)</p>' : pretty(r.response)) : '',
+    r.checks?.length ? checksTray(r.checks) : r.lazyChecks ? '<div class="checks-slot"><p class="muted" style="font-size:.85rem;margin:.6rem 0 0">Checking…</p></div>' : '',
     header ? sub('Header', pretty(header)) : '',
     payload ? sub('Payload', pretty(payload)) : '',
     r.set ? sub(`Raw SET${r.set ? ` · <a href="/playground/inspector/#set=${encodeURIComponent(r.set)}" target="_blank">inspect</a>` : ''}`, `<pre><code style="word-break:break-all;white-space:pre-wrap">${esc(r.set)}</code></pre>`) : '',
@@ -105,7 +108,30 @@ export function eventRow(r: EventRow): string {
 }
 
 /** Re-renders a feed but keeps rows the reader opened open (rows are keyed by data-key). */
-export function renderRows(el: HTMLElement, rows: { key: string; html: string }[], empty: string) {
+export function renderRows(el: HTMLElement, rows: { key: string; html: string; set?: string }[], empty: string) {
   const open = new Set([...el.querySelectorAll<HTMLDetailsElement>('details.event-row[open]')].map((d) => d.dataset.key));
-  el.innerHTML = rows.length ? rows.map((r) => r.html.replace('<details class="event-row">', `<details class="event-row" data-key="${esc(r.key)}"${open.has(r.key) ? ' open' : ''}>`)).join('') : empty;
+  el.innerHTML = rows.length ? rows.map((r) => r.html.replace('<details class="event-row">', `<details class="event-row" data-key="${esc(r.key)}"${r.set ? ` data-set="${esc(r.set)}"` : ''}${open.has(r.key) ? ' open' : ''}>`)).join('') : empty;
+}
+
+/**
+ * Fills the checks of opened rows that have a SET but no stored checks (the Transmitter log), by
+ * running it through the same validator the Receiver uses. Results are cached by row key, so the
+ * 5-second refresh doesn't re-check.
+ */
+const checkCache = new Map<string, string>();
+export function fillChecks(el: HTMLElement, expect: { issuer?: string; audience?: (key: string) => string | undefined } = {}) {
+  const fill = async (row: HTMLDetailsElement) => {
+    const slot = row.querySelector('.checks-slot');
+    const key = row.dataset.key!, set = row.dataset.set;
+    if (!slot || !set) return;
+    if (!checkCache.has(key)) {
+      const r = await api('POST', '/api/inspect', { body: { set, issuer: expect.issuer, audience: expect.audience?.(key) } });
+      checkCache.set(key, r.status === 200 ? checksTray(r.json.checks) : `<p class="error">${esc(errorText(r))}</p>`);
+    }
+    const now = el.querySelector<HTMLDetailsElement>(`details.event-row[data-key="${CSS.escape(key)}"] .checks-slot`);
+    if (now) now.outerHTML = checkCache.get(key)!;
+  };
+  // toggle doesn't bubble, so listen in the capture phase.
+  el.addEventListener('toggle', (e) => { const d = e.target as HTMLDetailsElement; if (d.matches?.('details.event-row') && d.open) fill(d); }, true);
+  return () => el.querySelectorAll<HTMLDetailsElement>('details.event-row[open]').forEach(fill);
 }

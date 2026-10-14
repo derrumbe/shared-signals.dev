@@ -149,7 +149,9 @@ const events = EVENTS.filter((e) => e.spec !== 'ssf').map((e) => ({ uri: uri(e),
       html: eventRow({
         at: e.at, level: e.verdict, eventType: e.event_type, title: e.event_type ? undefined : 'unreadable SET', via: streamName(e),
         outcome: `responded ${e.status}${e.response?.err ? ` ${e.response.err}` : ''}`,
-        response: e.response, checks: e.checks, set: e.raw, header: e.header, payload: e.payload,
+        detail: e.verdict === 'fail' ? `Rejected: ${e.checks.find((c: any) => c.level === 'fail')?.message ?? ''}`
+          : e.verdict === 'warn' ? `Accepted with ${e.checks.filter((c: any) => c.level === 'warn').length} warning(s).` : 'Accepted: every check passed.',
+        response: e.response ?? null, responseLabel: `Response sent · HTTP ${e.status}`, checks: e.checks, set: e.raw, header: e.header, payload: e.payload,
       }),
     })), '<p class="muted">Nothing yet. Create a stream above and fire an event from the <a href="/playground/transmitter/">Transmitter</a>, or push from your own.</p>');
   }

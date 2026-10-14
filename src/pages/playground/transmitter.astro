@@ -91,7 +91,7 @@ const events = EVENTS.filter((e) => e.spec !== 'ssf').map((e) => {
 
 
 <script>
-  import { api, badge, copyButtons, errorText, esc, eventRow, renderRows, type EventRow } from '../../scripts/playground';
+  import { api, badge, copyButtons, errorText, esc, eventRow, fillChecks, renderRows, type EventRow } from '../../scripts/playground';
   import { initAccount, render as renderAccount } from '../../scripts/account';
   import { currentCreds, deliveryCell, initCreds, loadStreams, readHash, statusBadge, streamCell, token, type Stream } from '../../scripts/session';
 
@@ -145,13 +145,16 @@ const events = EVENTS.filter((e) => e.spec !== 'ssf').map((e) => {
     'push failed, will retry': ['warn', 'retrying'], 'push failed': ['fail', 'failed'], 'rejected by Receiver': ['fail', 'rejected'],
     dropped: ['fail', 'dropped'], suppressed: ['warn', 'skipped'],
   };
-  function toRow(l: any, s: Stream): { key: string; html: string } {
+  function toRow(l: any, s: Stream): { key: string; html: string; set?: string } {
     const [level, label] = LABEL[l.action] ?? [l.ok ? 'info' : 'fail', l.ok ? 'info' : 'error'];
     const via = esc(s.description || s.stream_id);
     const row: EventRow = l.event
-      ? { at: l.at, level, label, eventType: l.event, via, outcome: l.action, detail: l.detail, set: l.set }
+      ? {
+          at: l.at, level, label, eventType: l.event, via, outcome: l.action, detail: l.detail, set: l.set, lazyChecks: !!l.set,
+          ...(l.response ? { response: l.response.body ?? null, responseLabel: `Receiver’s response · HTTP ${l.response.status}` } : {}),
+        }
       : { at: l.at, level, label, title: l.action, via, outcome: '', detail: l.detail };
-    return { key: `${s.stream_id}:${l.at}:${l.action}:${l.jti ?? ''}`, html: eventRow(row) };
+    return { key: `${s.stream_id}:${l.at}:${l.action}:${l.jti ?? ''}`, html: eventRow(row), set: l.set };
   }
 
   async function loadLog() {
@@ -169,7 +172,10 @@ const events = EVENTS.filter((e) => e.spec !== 'ssf').map((e) => {
     rows.sort((a, b) => b.at - a.at);
     $('log-status').innerHTML = waiting.length ? `<p style="font-size:.88rem;margin:.6rem 0 0">${waiting.length} SET(s) waiting: ${waiting.join(', ')}</p>` : '';
     renderRows($('log'), rows.slice(0, 60), `<p class="muted">${streams.length ? 'Nothing logged yet.' : 'No streams yet.'}</p>`);
+    refillChecks();
   }
+  // Checks run when a row is opened: the same validation the Receiver applies, with this sandbox's aud.
+  const refillChecks = fillChecks($('log'), { issuer: location.origin, audience: () => currentCreds().client_id });
   $('log-btn').onclick = loadLog;
   $('log-stream').onchange = loadLog;
   let logTimer: number | undefined;
