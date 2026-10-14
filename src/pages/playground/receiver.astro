@@ -96,7 +96,7 @@ const events = EVENTS.filter((e) => e.spec !== 'ssf').map((e) => ({ uri: uri(e),
 </Base>
 
 <script>
-  import { api, badge, copyButtons, decodeJwt, errorText, esc, pretty, randomHex, renderChecks, store } from '../../scripts/playground';
+  import { api, badge, copyButtons, checksTray, decodeJwt, errorText, esc, pretty, randomHex, store } from '../../scripts/playground';
   import { initAccount, render as renderAccount } from '../../scripts/account';
   import { currentCreds, deliveryCell, initCreds, isPush, loadStreams, readHash, statusBadge, streamCell, token, type Stream } from '../../scripts/session';
 
@@ -146,7 +146,7 @@ const events = EVENTS.filter((e) => e.spec !== 'ssf').map((e) => ({ uri: uri(e),
       const from = streamName(e);
       return `<details${i === 0 ? ' open' : ''}>
         <summary>${badge(e.verdict)} <code>${esc(type)}</code> ${from ? `<span>via ${from}</span>` : ''} <span class="muted">${esc(new Date(e.at).toLocaleTimeString())} · responded ${esc(e.status)}</span></summary>
-        ${renderChecks(e.checks)}
+        ${checksTray(e.checks)}
         ${e.response ? `<p class="muted" style="font-size:.85rem;margin:.5rem 0 0">Response body</p>${pretty(e.response)}` : ''}
         ${e.header ? `<p class="muted" style="font-size:.85rem;margin:.5rem 0 0">Header</p>${pretty(e.header)}` : ''}
         ${e.payload ? `<p class="muted" style="font-size:.85rem;margin:.5rem 0 0">Payload</p>${pretty(e.payload)}` : ''}

@@ -39,6 +39,14 @@ export type Check = { id: string; level: 'pass' | 'warn' | 'fail'; message: stri
 
 export const badge = (level: string, text = level) => `<span class="badge ${esc(level)}">${esc(text)}</span>`;
 
+/** The check list folded into a tray whose summary gives the counts, e.g. "1 failed · 15 passed". */
+export function checksTray(checks: Check[]): string {
+  const n = (l: string) => checks.filter((c) => c.level === l).length;
+  const plural = (k: number, one: string, many: string) => `${k} ${k === 1 ? one : many}`;
+  const parts = [n('fail') && plural(n('fail'), 'failed', 'failed'), n('warn') && plural(n('warn'), 'warning', 'warnings'), n('pass') && `${n('pass')} passed`].filter(Boolean);
+  return `<details class="tray"><summary>Checks <span class="muted">— ${parts.join(' · ')}</span></summary>${renderChecks(checks)}</details>`;
+}
+
 export function renderChecks(checks: Check[]): string {
   return `<ul class="checks">${checks.map((c) => `<li>${badge(c.level)}<span>${esc(c.message)}</span></li>`).join('')}</ul>`;
 }
