@@ -25,11 +25,11 @@ not_found_handling = "404-page"
 # and the generated signing key. SQLite-backed, which the Workers Free plan requires.
 [[durable_objects.bindings]]
 name = "TRANSMITTER"
-class_name = "Transmitter"
+class_name = "SandboxTransmitter"
 
 [[durable_objects.bindings]]
 name = "RECEIVER"
-class_name = "Receiver"
+class_name = "SandboxReceiver"
 
 [[durable_objects.bindings]]
 name = "KEYS"
@@ -47,6 +47,13 @@ new_sqlite_classes = ["Transmitter", "Receiver", "KeyStore"]
 [[migrations]]
 tag = "v2"
 new_sqlite_classes = ["Account"]
+
+# 2026-10-14: one sandbox at a time. Deletes every sandbox and sample Receiver created before
+# (all their storage), and starts fresh classes. Accounts and the signing key are untouched.
+[[migrations]]
+tag = "v3"
+deleted_classes = ["Transmitter", "Receiver"]
+new_sqlite_classes = ["SandboxTransmitter", "SandboxReceiver"]
 
 # Per-IP limit on /ssf/* and /api/*. namespace_id is any account-unique integer.
 [[ratelimits]]

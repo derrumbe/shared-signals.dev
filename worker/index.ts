@@ -27,8 +27,10 @@ import { validateSet } from './validate';
 import type { Env } from './env';
 
 export { KeyStore } from './keys';
-export { Transmitter } from './transmitter';
-export { Receiver } from './receiver';
+// Exported under new class names: migration v3 in wrangler.toml deleted the old Transmitter and
+// Receiver classes, and with them every sandbox and sample Receiver created before 2026-10-14.
+export { Transmitter as SandboxTransmitter } from './transmitter';
+export { Receiver as SandboxReceiver } from './receiver';
 export { Account } from './account';
 
 const PUBLIC = { 'access-control-allow-origin': '*' };
