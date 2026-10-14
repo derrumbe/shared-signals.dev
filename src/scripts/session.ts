@@ -85,6 +85,23 @@ window.addEventListener('hashchange', () => {
   location.reload();
 });
 
+/**
+ * Makes this browser forget its sandbox (credentials, token, sample Receiver) and how it chose to keep
+ * it, then reloads to the chooser. Used when signing out of, or deleting, the account the sandbox is
+ * saved to, so the next person at this browser doesn't inherit it. Nothing server-side is deleted.
+ */
+export function forgetSandbox(flash: string) {
+  creds.set(null);
+  tokenStore.set(null);
+  receiverStore.set(null);
+  modeStore.set(null);
+  flashStore.set(flash);
+  location.replace(location.pathname); // drop any #receiver-id from the URL
+}
+
+/** A one-off message to show after a reload. */
+export const flashStore = store<string>('ssf.flash');
+
 /** Switches this browser to another sandbox (e.g. one saved to a passkey account) and reloads. */
 export function useSandbox(c: Creds) {
   creds.set(c);

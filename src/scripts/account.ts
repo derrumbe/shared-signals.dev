@@ -3,7 +3,7 @@
 
 import { browserSupportsWebAuthn, startAuthentication, startRegistration } from '@simplewebauthn/browser';
 import { api, badge, errorText, esc } from './playground';
-import { currentCreds, modeStore, useSandbox } from './session';
+import { currentCreds, flashStore, forgetSandbox, modeStore, useSandbox } from './session';
 
 const body = () => document.getElementById('acct-body')!;
 const msg = (html: string) => (document.getElementById('acct-msg')!.innerHTML = html);
@@ -153,16 +153,24 @@ function signedIn(a: any) {
   document.getElementById('acct-addkey')!.onclick = addPasskey;
   document.getElementById('acct-signout')!.onclick = async () => {
     const r = await api('POST', '/api/auth/logout', { body: {} });
-    r.status === 200 ? (msg('<p class="muted">Signed out.</p>'), render()) : fail(errorText(r));
+    if (r.status !== 200) return fail(errorText(r));
+    // A sandbox saved to the account goes with it; anything else stays in this browser.
+    if (current) return forgetSandbox('Signed out. This browser no longer holds your sandbox; sign in again to pick it up.');
+    msg('<p class="muted">Signed out.</p>'); render();
   };
   document.getElementById('acct-delete')!.onclick = async () => {
     if (!confirm('Delete your account? Your passkeys stop working here and saved sandboxes are forgotten. The sandboxes and their streams are not deleted.')) return;
     const r = await api('DELETE', '/api/account');
-    r.status === 204 ? (msg('<p class="muted">Account deleted. You may also want to remove the passkey from your device’s password manager.</p>'), render()) : fail(errorText(r));
+    if (r.status !== 204) return fail(errorText(r));
+    const note = 'Account deleted. You may also want to remove the passkey from your device’s password manager.';
+    if (current) return forgetSandbox(`${note} This browser no longer holds the sandbox that was saved to it.`);
+    msg(`<p class="muted">${note}</p>`); render();
   };
 }
 
 export async function render() {
+  const flash = flashStore.get();
+  if (flash) { flashStore.set(null); msg(`<p class="muted">${esc(flash)}</p>`); }
   const r = await api('GET', '/api/account');
   const badgeEl = document.getElementById('acct-badge')!;
   if (r.status !== 200) { body().innerHTML = `<p class="error">${esc(errorText(r))}</p>`; return; }
