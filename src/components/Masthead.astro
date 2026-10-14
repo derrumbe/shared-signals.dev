@@ -6,7 +6,7 @@ const path = Astro.url.pathname;
 <header class="masthead">
   <div class="wrap">
     <a class="brand" href="/"><Logo />shared-signals.dev</a>
-    <nav class="nav" aria-label="Primary">
+    <nav class="nav" id="primary-nav" aria-label="Primary">
       {NAV.map((n) => (
         <a href={n.href} aria-current={path.startsWith(n.href) ? 'page' : undefined}>{n.label}</a>
       ))}
@@ -14,9 +14,22 @@ const path = Astro.url.pathname;
     <button class="theme-toggle" type="button" aria-label="Toggle colour theme" title="Toggle theme">
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.2 4.2l1.4 1.4M18.4 18.4l1.4 1.4M1 12h2M21 12h2M4.2 19.8l1.4-1.4M18.4 5.6l1.4-1.4"/></svg>
     </button>
+    <!-- Phones and narrow windows: the nav collapses behind this button. -->
+    <button class="menu-toggle" type="button" aria-controls="primary-nav" aria-expanded="false" aria-label="Menu">
+      <svg class="icon-open" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 6h18M3 12h18M3 18h18"/></svg>
+      <svg class="icon-close" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M5 5l14 14M19 5L5 19"/></svg>
+    </button>
   </div>
 </header>
 <script>
+  const header = document.querySelector('.masthead')!;
+  const menu = document.querySelector<HTMLButtonElement>('.menu-toggle')!;
+  const setOpen = (open: boolean) => { header.classList.toggle('open', open); menu.setAttribute('aria-expanded', String(open)); };
+  menu.addEventListener('click', () => setOpen(!header.classList.contains('open')));
+  document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && header.classList.contains('open')) { setOpen(false); menu.focus(); } });
+  header.querySelectorAll('.nav a').forEach((a) => a.addEventListener('click', () => setOpen(false)));
+  document.addEventListener('click', (e) => { if (header.classList.contains('open') && !header.contains(e.target as Node)) setOpen(false); });
+
   const btn = document.querySelector('.theme-toggle');
   btn?.addEventListener('click', () => {
     const root = document.documentElement;
