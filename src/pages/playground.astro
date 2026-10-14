@@ -1,44 +1,56 @@
 ---
 import Base from '../layouts/Base.astro';
 ---
-<Base title="Playground" description="A public sample SSF Transmitter and Receiver for testing your own Shared Signals implementation. Coming soon.">
-  <p class="eyebrow">Playground · coming soon</p>
+<Base title="Playground" description="A live sample SSF Transmitter and Receiver, built to the CAEP Interoperability Profile, plus a SET inspector — for testing your own Shared Signals implementation.">
+  <p class="eyebrow">Playground</p>
   <h1>Test against a live Transmitter and Receiver</h1>
-  <p class="lede">A public, standards-conformant sample Transmitter and Receiver, so you can test your implementation without
-  needing a partner on the other end.</p>
+  <p class="lede">A public sample Transmitter and Receiver built to the <a href="/specs/caep-interop/">CAEP Interoperability Profile</a>,
+  so you can test your implementation without needing a partner on the other end.</p>
 
   <div class="grid" style="margin:2rem 0">
-    <div class="card">
+    <a class="card" href="/playground/transmitter/">
       <span class="tags"><span class="tag ssf">Transmitter</span></span>
       <h3>Sample Transmitter</h3>
-      <p>Discovery at <code>/.well-known/ssf-configuration</code>, full stream management, push and poll delivery,
-      verification — and a UI to fire any CAEP or RISC event at your stream.</p>
-    </div>
-    <div class="card">
+      <p>Discovery, OAuth with <code>ssf.read</code>/<code>ssf.manage</code>, full stream management, push and poll delivery,
+      verification — and a console to fire any CAEP or RISC event at your stream.</p>
+      <span class="more">Open the Transmitter →</span>
+    </a>
+    <a class="card" href="/playground/receiver/">
       <span class="tags"><span class="tag caep">Receiver</span></span>
       <h3>Sample Receiver</h3>
       <p>Point your Transmitter at it and watch your SETs arrive, decoded and validated, with clear errors when
       a signature, <code>iss</code>, <code>aud</code> or <code>typ</code> is wrong.</p>
-    </div>
-    <div class="card">
+      <span class="more">Create a Receiver →</span>
+    </a>
+    <a class="card" href="/playground/inspector/">
       <span class="tags"><span class="tag neutral">Tools</span></span>
       <h3>SET inspector</h3>
-      <p>Paste a SET to decode it, check it against the event schema and verify it with a JWKS URL.</p>
-    </div>
+      <p>Paste a SET to decode it, verify its signature by discovery or a JWKS, and check it against the specs.</p>
+      <span class="more">Inspect a SET →</span>
+    </a>
   </div>
 
   <div class="prose">
-    <h2>Planned endpoints</h2>
-    <p>These paths are reserved on this domain and will go live with the playground:</p>
+    <h2>Endpoints</h2>
+    <p>The Transmitter’s issuer is <code>https://shared-signals.dev</code>. Everything a Receiver needs is in its
+    <a href="/.well-known/ssf-configuration">Transmitter Configuration Metadata</a>.</p>
     <div class="table-wrap"><table>
       <thead><tr><th>Path</th><th>Purpose</th></tr></thead>
       <tbody>
         <tr><td><code>/.well-known/ssf-configuration</code></td><td>Transmitter Configuration Metadata</td></tr>
+        <tr><td><code>/jwks.json</code></td><td>Signing keys (RS256)</td></tr>
+        <tr><td><code>/ssf/oauth/token</code></td><td>Access tokens (client credentials grant; any client_id, a secret of 16+ characters). Metadata at <code>/.well-known/oauth-authorization-server</code></td></tr>
         <tr><td><code>/ssf/stream</code>, <code>/ssf/status</code>, <code>/ssf/subjects:add</code>, <code>/ssf/subjects:remove</code>, <code>/ssf/verify</code></td><td>Stream management</td></tr>
-        <tr><td><code>/ssf/poll/…</code></td><td>Poll delivery (RFC 8936)</td></tr>
-        <tr><td><code>/ssf/push/…</code></td><td>Sample Receiver push endpoint (RFC 8935)</td></tr>
+        <tr><td><code>/ssf/poll/&lt;stream_id&gt;</code></td><td>Poll delivery (RFC 8936)</td></tr>
+        <tr><td><code>/ssf/push/&lt;receiver_id&gt;</code></td><td>Sample Receiver push endpoint (RFC 8935)</td></tr>
       </tbody>
     </table></div>
-    <p>In the meantime, <a href="https://caep.dev/">caep.dev</a> offers a public test service.</p>
+    <h2>Good to know</h2>
+    <ul>
+      <li>It’s a sandbox: rate-limited, with small quotas, and idle streams and receivers are deleted after 7 days. Don’t send real personal data.</li>
+      <li>The source is on <a href="https://github.com/derrumbe/shared-signals.dev/tree/main/worker">GitHub</a> — about 1,400 lines of TypeScript
+      on Cloudflare Workers and Durable Objects, written to be read. Issues and pull requests welcome.</li>
+      <li>Another public test service: <a href="https://caep.dev/">caep.dev</a>.</li>
+    </ul>
   </div>
 </Base>

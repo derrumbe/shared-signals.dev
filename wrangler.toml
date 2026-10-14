@@ -1,14 +1,13 @@
 # Deployed as a Worker serving static assets, the same shape as xebecstudios.org.
 #
-# Today every request falls through to the built site in ./dist. The Worker exists
-# now so the sample Transmitter and Receiver can be added later as routes on the
-# same deployment (/.well-known/ssf-configuration, /ssf/*) without re-plumbing.
+# Static pages come from the built site in ./dist. The Worker also runs the sample
+# SSF Transmitter and Receiver (worker/*.ts); see worker/index.ts for the routes.
 #
 # Keep `name` matching the Worker shown in the Cloudflare dashboard. Workers Builds
 # deploys under its own project name, but `wrangler secret put` uses this one, and a
 # mismatch silently creates an empty second Worker.
 name = "shared-signals-dev"
-main = "worker/index.js"
+main = "worker/index.ts"
 compatibility_date = "2026-01-01"
 # Served only on shared-signals.dev (custom domain set in the dashboard), not on
 # *.workers.dev, so there is one canonical address.
@@ -18,6 +17,34 @@ workers_dev = false
 directory = "./dist"
 binding = "ASSETS"
 # Only these paths reach the Worker before the asset handler. Everything else is a
-# static file. Add the transmitter/receiver routes here as they are built.
-run_worker_first = ["/.well-known/ssf-configuration*", "/ssf/*", "/api/*"]
+# static file.
+run_worker_first = ["/.well-known/ssf-configuration*", "/.well-known/oauth-authorization-server", "/jwks.json", "/ssf/*", "/api/*"]
 not_found_handling = "404-page"
+
+# State for the sample Transmitter (one object per OAuth client), Receiver (one per receiver id)
+# and the generated signing key. SQLite-backed, which the Workers Free plan requires.
+[[durable_objects.bindings]]
+name = "TRANSMITTER"
+class_name = "Transmitter"
+
+[[durable_objects.bindings]]
+name = "RECEIVER"
+class_name = "Receiver"
+
+[[durable_objects.bindings]]
+name = "KEYS"
+class_name = "KeyStore"
+
+[[migrations]]
+tag = "v1"
+new_sqlite_classes = ["Transmitter", "Receiver", "KeyStore"]
+
+# Per-IP limit on /ssf/* and /api/*. namespace_id is any account-unique integer.
+[[ratelimits]]
+name = "RATE_LIMITER"
+namespace_id = "1001"
+simple = { limit = 120, period = 60 }
+
+# The signing key: set SSF_SIGNING_KEY (an RSA PKCS#8 PEM or JWK) with
+#   openssl genpkey -algorithm RSA -pkeyopt rsa_keygen_bits:2048 | npx wrangler secret put SSF_SIGNING_KEY
+# Until it is set, the Worker generates a key once and keeps it in the KEYS Durable Object.

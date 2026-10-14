@@ -1,0 +1,122 @@
+---
+import Base from '../../layouts/Base.astro';
+---
+<Base title="Sample Receiver" description="A public SSF push endpoint (RFC 8935). Point your Transmitter at it and see every SET decoded and checked against SSF, CAEP and the CAEP Interoperability Profile.">
+  <p class="eyebrow"><a href="/playground/">Playground</a> · Receiver</p>
+  <h1>Sample Receiver</h1>
+  <p class="lede">A push endpoint (RFC 8935) for testing your Transmitter. Every SET that arrives is decoded, its signature checked
+  against your issuer’s keys, and its claims checked against SSF 1.0, CAEP and the Interoperability Profile — with the exact
+  response your Transmitter got.</p>
+
+  <div class="panel" id="create-panel">
+    <h2>Create a receiver</h2>
+    <p class="muted" style="margin:0;font-size:.9rem">Both fields are optional. Set them and the receiver rejects SETs whose <code>iss</code> or <code>aud</code> don’t match, as a real Receiver must.</p>
+    <div class="row">
+      <label class="field"><span>Expected issuer (<code>iss</code>)</span><input type="url" id="issuer" placeholder="https://transmitter.example.com" /></label>
+      <label class="field"><span>Expected audience (<code>aud</code>)</span><input type="text" id="audience" placeholder="the aud your Transmitter puts in the stream" /></label>
+    </div>
+    <button class="btn primary" id="create">Create receiver</button>
+    <div class="out" id="create-out"></div>
+  </div>
+
+  <div class="panel" id="details" hidden>
+    <h2>Your receiver</h2>
+    <p class="muted" style="margin:0 0 .5rem;font-size:.9rem">Create a stream on your Transmitter with push delivery to this endpoint, and set
+    <code>delivery.authorization_header</code> to the value below. Anyone with this page’s link can see what arrives, so don’t send real user data.
+    Receivers are deleted after 7 days without use.</p>
+    <label class="field"><span><code>delivery.endpoint_url</code></span><span class="copy"><input type="text" id="endpoint" readonly /><button class="btn small" data-copy="endpoint">Copy</button></span></label>
+    <label class="field"><span><code>delivery.authorization_header</code></span><span class="copy"><input type="text" id="authz" readonly /><button class="btn small" data-copy="authz">Copy</button></span></label>
+    <pre><code id="stream-json"></code></pre>
+    <p class="muted" style="font-size:.85rem" id="expect"></p>
+  </div>
+
+  <div class="panel" id="feed-panel" hidden>
+    <div style="display:flex;gap:.7rem;align-items:center;flex-wrap:wrap">
+      <h2 style="margin:0;flex:1">Received SETs</h2>
+      <span class="radios"><label><input type="checkbox" id="auto" checked /> refresh every 5s</label></span>
+      <button class="btn small" id="refresh">Refresh</button>
+      <button class="btn small" id="clear">Clear</button>
+    </div>
+    <div class="feed" id="feed" style="margin-top:1rem"></div>
+  </div>
+
+  <div class="prose">
+    <h2>What gets checked</h2>
+    <ul>
+      <li><strong>Transport</strong>: <code>Authorization</code> header, <code>Content-Type: application/secevent+jwt</code>.</li>
+      <li><strong>JOSE header</strong>: <code>typ</code> is <code>secevent+jwt</code>, <code>alg</code> is <code>RS256</code>, a <code>kid</code> is present.</li>
+      <li><strong>Signature</strong>: keys found by SSF discovery from the SET’s <code>iss</code>
+        (<code>/.well-known/ssf-configuration</code> → <code>jwks_uri</code>).</li>
+      <li><strong>Claims</strong>: <code>iss</code>, <code>aud</code>, <code>iat</code>, <code>jti</code>, a top-level <code>sub_id</code>, no <code>sub</code> or <code>exp</code>, <code>txn</code> recommended.</li>
+      <li><strong>Event</strong>: exactly one event, a known type, its required claims, and <code>reason_admin</code> on CAEP events.</li>
+    </ul>
+    <p>A SET that fails gets <code>400</code> with an RFC 8935 error (<code>invalid_key</code>, <code>invalid_issuer</code>, <code>invalid_audience</code>,
+    <code>invalid_request</code>); one that passes gets <code>202 Accepted</code>. Warnings don’t cause a rejection.
+    To check a SET without sending it, use the <a href="/playground/inspector/">SET inspector</a>.</p>
+  </div>
+</Base>
+
+<script>
+  import { api, badge, copyButtons, errorText, esc, pretty, renderChecks, store } from '../../scripts/playground';
+
+  const $ = (id: string) => document.getElementById(id)!;
+  const remembered = store<string>('ssf.receiver');
+  let id = location.hash.slice(1) || remembered.get() || '';
+  let timer: number | undefined;
+
+  function show(r: any) {
+    id = r.receiver_id;
+    remembered.set(id);
+    if (location.hash.slice(1) !== id) history.replaceState(null, '', `#${id}`);
+    ($('endpoint') as HTMLInputElement).value = r.endpoint_url;
+    ($('authz') as HTMLInputElement).value = r.authorization_header;
+    $('stream-json').textContent = JSON.stringify({ delivery: { method: 'urn:ietf:rfc:8935', endpoint_url: r.endpoint_url, authorization_header: r.authorization_header } }, null, 2);
+    $('expect').textContent = `Expected iss: ${r.expected_issuer ?? 'any'} · expected aud: ${r.expected_audience ?? 'any'} · expires ${new Date(r.expires).toLocaleString()} unless used.`;
+    $('details').hidden = false;
+    $('feed-panel').hidden = false;
+  }
+
+  function renderFeed(events: any[]) {
+    if (!events.length) { $('feed').innerHTML = '<p class="muted">Nothing yet. Push a SET to the endpoint above — or use the <a href="/playground/transmitter/">sample Transmitter</a>.</p>'; return; }
+    $('feed').innerHTML = events.map((e, i) => {
+      const type = e.event_type ? e.event_type.split('/').pop() : 'unreadable SET';
+      return `<details${i === 0 ? ' open' : ''}>
+        <summary>${badge(e.verdict)} <code>${esc(type)}</code> <span class="muted">${esc(new Date(e.at).toLocaleTimeString())} · responded ${esc(e.status)}</span></summary>
+        ${renderChecks(e.checks)}
+        ${e.response ? `<p class="muted" style="font-size:.85rem;margin:.5rem 0 0">Response body</p>${pretty(e.response)}` : ''}
+        ${e.header ? `<p class="muted" style="font-size:.85rem;margin:.5rem 0 0">Header</p>${pretty(e.header)}` : ''}
+        ${e.payload ? `<p class="muted" style="font-size:.85rem;margin:.5rem 0 0">Payload</p>${pretty(e.payload)}` : ''}
+        <p class="muted" style="font-size:.85rem;margin:.5rem 0 0">Raw</p><pre><code style="word-break:break-all;white-space:pre-wrap">${esc(e.raw)}</code></pre>
+      </details>`;
+    }).join('');
+  }
+
+  async function load() {
+    if (!id) return;
+    const r = await api('GET', `/api/receivers/${id}`);
+    if (r.status === 404) { remembered.set(null); id = ''; $('details').hidden = $('feed-panel').hidden = true; $('create-out').innerHTML = `<p class="error">${esc(errorText(r))}</p>`; return; }
+    if (r.status !== 200) return;
+    show(r.json);
+    renderFeed(r.json.events);
+  }
+
+  function poll() {
+    clearInterval(timer);
+    if (($('auto') as HTMLInputElement).checked) timer = setInterval(() => { if (!document.hidden) load(); }, 5000) as unknown as number;
+  }
+
+  $('create').onclick = async () => {
+    const r = await api('POST', '/api/receivers', { body: { issuer: ($('issuer') as HTMLInputElement).value, audience: ($('audience') as HTMLInputElement).value } });
+    if (r.status !== 201) { $('create-out').innerHTML = `<p class="error">${esc(errorText(r))}</p>`; return; }
+    $('create-out').innerHTML = '';
+    show(r.json);
+    renderFeed([]);
+  };
+  $('refresh').onclick = load;
+  $('clear').onclick = async () => { await api('DELETE', `/api/receivers/${id}/events`); load(); };
+  $('auto').onchange = poll;
+  window.addEventListener('hashchange', () => { id = location.hash.slice(1); load(); });
+  copyButtons();
+  load();
+  poll();
+</script>

@@ -1,0 +1,56 @@
+---
+import Base from '../../layouts/Base.astro';
+---
+<Base title="SET Inspector" description="Decode a Security Event Token, verify its signature and check it against SSF 1.0, CAEP, RISC and the CAEP Interoperability Profile.">
+  <p class="eyebrow"><a href="/playground/">Playground</a> · SET inspector</p>
+  <h1>SET inspector</h1>
+  <p class="lede">Paste a Security Event Token to decode it, verify its signature and check it against SSF 1.0, CAEP, RISC and the
+  CAEP Interoperability Profile — the same checks the <a href="/playground/receiver/">sample Receiver</a> runs.</p>
+
+  <div class="panel">
+    <label class="field"><span>SET (compact JWS)</span><textarea id="set" rows="6" placeholder="eyJ0eXAiOiJzZWNldmVudCtqd3QiLCJhbGciOiJSUzI1NiIs…" spellcheck="false"></textarea></label>
+    <details>
+      <summary style="cursor:pointer;font-size:.9rem">Keys and expectations (optional)</summary>
+      <p class="muted" style="font-size:.88rem">By default the signing key is found by SSF discovery from the SET’s <code>iss</code>. Override that with a JWKS URL or a pasted JWKS.</p>
+      <div class="row">
+        <label class="field"><span>JWKS URL</span><input type="url" id="jwks_uri" placeholder="https://transmitter.example.com/jwks.json" /></label>
+        <label class="field"><span>Expected <code>iss</code></span><input type="text" id="issuer" /></label>
+        <label class="field"><span>Expected <code>aud</code></span><input type="text" id="audience" /></label>
+      </div>
+      <label class="field"><span>JWKS (JSON)</span><textarea id="jwks" rows="3" placeholder='{"keys":[…]}' spellcheck="false"></textarea></label>
+    </details>
+    <div class="actions" style="margin:1rem 0 0"><button class="btn primary" id="go">Inspect</button></div>
+    <div class="out" id="out"></div>
+  </div>
+
+  <p class="prose muted" style="font-size:.9rem">The SET is sent to this site’s Worker so it can fetch keys without CORS problems; it is not stored.
+  Don’t paste SETs carrying real personal data into any public tool, this one included.</p>
+</Base>
+
+<script>
+  import { api, badge, errorText, esc, pretty, renderChecks } from '../../scripts/playground';
+
+  const $ = <T extends HTMLElement = HTMLInputElement>(id: string) => document.getElementById(id) as T;
+
+  $('go').onclick = async () => {
+    const out = $('out');
+    let jwks: unknown;
+    const jwksText = $<HTMLTextAreaElement>('jwks').value.trim();
+    if (jwksText) {
+      try { jwks = JSON.parse(jwksText); } catch { out.innerHTML = '<p class="error">The pasted JWKS is not valid JSON.</p>'; return; }
+    }
+    out.innerHTML = '<p class="muted">Checking…</p>';
+    const r = await api('POST', '/api/inspect', { body: {
+      set: $<HTMLTextAreaElement>('set').value, jwks, jwks_uri: $('jwks_uri').value, issuer: $('issuer').value, audience: $('audience').value,
+    } });
+    if (r.status !== 200) { out.innerHTML = `<p class="error">${esc(errorText(r))}</p>`; return; }
+    const v = r.json;
+    out.innerHTML = `<h3 style="display:flex;gap:.5rem;align-items:center">${badge(v.verdict)} ${v.eventType ? `<code>${esc(v.eventType.split('/').pop())}</code>` : ''}</h3>
+      ${renderChecks(v.checks)}
+      ${v.header ? `<h3>Header</h3>${pretty(v.header)}` : ''}
+      ${v.payload ? `<h3>Payload</h3>${pretty(v.payload)}` : ''}`;
+  };
+
+  const fromHash = new URLSearchParams(location.hash.slice(1)).get('set');
+  if (fromHash) { $<HTMLTextAreaElement>('set').value = fromHash; $('go').click(); }
+</script>

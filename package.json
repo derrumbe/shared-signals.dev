@@ -9,13 +9,16 @@
     "preview": "npm run build && wrangler dev",
     "check": "astro check",
     "deploy": "npm run build && wrangler deploy",
-    "check-specs": "bash scripts/check-specs.sh"
+    "check-specs": "bash scripts/check-specs.sh",
+    "smoke": "node scripts/smoke-test.mjs",
+    "check-worker": "tsc -p worker/tsconfig.json"
   },
   "dependencies": {
-    "astro": "^5.6.0",
-    "@astrojs/sitemap": "^3.3.0"
+    "@astrojs/sitemap": "^3.3.0",
+    "astro": "^5.6.0"
   },
   "devDependencies": {
+    "@cloudflare/workers-types": "^5.20261013.1",
     "typescript": "^5.8.0",
     "wrangler": "^4.0.0"
   }

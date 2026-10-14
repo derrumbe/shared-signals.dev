@@ -1,0 +1,329 @@
+---
+import Base from '../../layouts/Base.astro';
+import { EVENTS, uri } from '../../data/events';
+
+// Event picker data: every CAEP and RISC type, with the catalogue's example claims as a starting point.
+const events = EVENTS.filter((e) => e.spec !== 'ssf').map((e) => {
+  const ex = e.example as any;
+  const body = ex?.events ? { ...(Object.values(ex.events)[0] as object) } : {};
+  delete (body as any).event_timestamp;
+  return { uri: uri(e), name: e.name, spec: e.spec, deprecated: !!e.deprecated, sub_id: ex?.sub_id ?? { format: 'email', email: 'alice@example.com' }, body };
+});
+---
+<Base title="Sample Transmitter" description="A live SSF Transmitter built to the CAEP Interoperability Profile. Create a stream with push or poll delivery and fire any CAEP or RISC event at it.">
+  <p class="eyebrow"><a href="/playground/">Playground</a> · Transmitter</p>
+  <h1>Sample Transmitter</h1>
+  <p class="lede">A live SSF Transmitter at <code>https://shared-signals.dev</code>, built to the
+  <a href="/specs/caep-interop/">CAEP Interoperability Profile</a>. Connect your Receiver to it, or drive it from this page:
+  create a stream, then fire any CAEP or RISC event and watch it go out.</p>
+
+  <div class="callout prose">
+    <p><strong>Using your own Receiver?</strong> Everything on this page goes through the public API, so your Receiver can do the same:
+    discover <a href="/.well-known/ssf-configuration"><code>/.well-known/ssf-configuration</code></a>, get a token from
+    <code>/ssf/oauth/token</code> with the client credentials below, and create its own stream. See <a href="#curl">the curl walkthrough</a>.</p>
+  </div>
+
+  <div class="panel">
+    <h2>1. Credentials</h2>
+    <p class="muted" style="margin:0;font-size:.9rem">There is no sign-up. Any <code>client_id</code> works with any <code>client_secret</code> of 16+ characters;
+    the pair names your private sandbox, so streams created with it are invisible to everyone else. The <code>client_id</code> becomes your streams’ <code>aud</code>.
+    These are kept in this browser only.</p>
+    <div class="row">
+      <label class="field"><span><code>client_id</code></span><input type="text" id="client_id" spellcheck="false" /></label>
+      <label class="field"><span><code>client_secret</code></span><span class="copy"><input type="text" id="client_secret" spellcheck="false" /><button class="btn small" data-copy="client_secret">Copy</button></span></label>
+    </div>
+    <div class="actions" style="margin:.5rem 0 0">
+      <button class="btn primary" id="token-btn">Get access token</button>
+      <button class="btn" id="new-creds">New sandbox</button>
+    </div>
+    <div class="out" id="token-out"></div>
+  </div>
+
+  <div class="panel">
+    <h2>2. Create a stream</h2>
+    <div class="radios" role="radiogroup" aria-label="Delivery">
+      <label><input type="radio" name="delivery" value="sample" checked /> Push to a new sample Receiver</label>
+      <label><input type="radio" name="delivery" value="push" /> Push to my endpoint</label>
+      <label><input type="radio" name="delivery" value="poll" /> Poll</label>
+    </div>
+    <div id="push-fields" hidden class="row">
+      <label class="field"><span><code>endpoint_url</code></span><input type="url" id="endpoint_url" placeholder="https://receiver.example.com/events" /></label>
+      <label class="field"><span><code>authorization_header</code> <small>(optional)</small></span><input type="text" id="authorization_header" placeholder="Bearer …" /></label>
+    </div>
+    <label class="field"><span><code>description</code> <small>(optional)</small></span><input type="text" id="description" placeholder="My test stream" /></label>
+    <details>
+      <summary style="cursor:pointer;font-size:.9rem"><code>events_requested</code> — all CAEP and RISC events by default</summary>
+      <div class="radios" style="margin:.6rem 0;font-size:.85rem;display:grid;grid-template-columns:repeat(auto-fill,minmax(15rem,1fr))">
+        {events.map((e) => <label><input type="checkbox" name="events_requested" value={e.uri} checked={!e.deprecated} /> <span class={`tag ${e.spec}`}>{e.spec}</span> {e.name}</label>)}
+      </div>
+    </details>
+    <div class="actions" style="margin:1rem 0 0"><button class="btn primary" id="create-btn">Create stream</button></div>
+    <div class="out" id="create-out"></div>
+  </div>
+
+  <div class="panel">
+    <div style="display:flex;gap:.7rem;align-items:center;flex-wrap:wrap">
+      <h2 style="margin:0;flex:1">3. Your streams</h2>
+      <button class="btn small" id="list-btn">Refresh</button>
+    </div>
+    <div class="out" id="streams"></div>
+  </div>
+
+  <div class="panel">
+    <h2>4. Fire an event</h2>
+    <div class="row">
+      <label class="field"><span>Stream</span><select id="fire-stream"><option value="">All my streams</option></select></label>
+      <label class="field"><span>Event type</span><select id="fire-type">
+        {events.map((e) => <option value={e.uri}>{e.spec.toUpperCase()} · {e.name}{e.deprecated ? ' (deprecated)' : ''}</option>)}
+      </select></label>
+    </div>
+    <div class="row">
+      <label class="field"><span><code>sub_id</code></span><textarea id="fire-sub" rows="6" spellcheck="false"></textarea></label>
+      <label class="field"><span>Event claims</span><textarea id="fire-body" rows="6" spellcheck="false"></textarea>
+        <small>CAEP events get <code>event_timestamp</code> = now and, if you leave it out, a <code>reason_admin</code>.</small></label>
+    </div>
+    <button class="btn primary" id="fire-btn">Send</button>
+    <div class="out" id="fire-out"></div>
+  </div>
+
+  <div class="panel" id="log-panel" hidden>
+    <div style="display:flex;gap:.7rem;align-items:center;flex-wrap:wrap">
+      <h2 style="margin:0;flex:1">Stream log <code id="log-id" style="font-size:.8rem"></code></h2>
+      <button class="btn small" id="log-btn">Refresh</button>
+    </div>
+    <div class="out" id="log"></div>
+  </div>
+
+  <div class="prose">
+    <h2 id="curl">Connect your own Receiver</h2>
+    <p>Use any <code>client_id</code> and a secret of 16+ characters. Tokens last an hour and carry
+    <code>ssf.read</code> (read config and status, poll) and/or <code>ssf.manage</code> (everything else).</p>
+    <pre><code id="curl-text"></code></pre>
+    <h3>Limits</h3>
+    <ul>
+      <li>10 streams per client; 50 undelivered SETs per stream; 30 fired events a minute; 120 API calls a minute per IP.</li>
+      <li><code>min_verification_interval</code> is 15 seconds. Streams are deleted after 7 days without Receiver activity (<code>inactivity_timeout</code>).</li>
+      <li>Push endpoints must be public <code>https</code> URLs on the default port, by DNS name. Redirects are not followed; failed pushes are retried 4 times over about an hour.</li>
+      <li><code>default_subjects</code> is <code>ALL</code>: every subject is in every stream until you call <code>subjects:remove</code>.</li>
+      <li>This is a test service. Don’t send real personal data, and don’t rely on it staying up.</li>
+    </ul>
+  </div>
+
+  <script type="application/json" id="events-data" set:html={JSON.stringify(events)} />
+</Base>
+
+<script>
+  import { api, badge, copyButtons, decodeJwt, errorText, esc, pretty, randomHex, store } from '../../scripts/playground';
+
+  type Ev = { uri: string; name: string; sub_id: unknown; body: Record<string, unknown> };
+  const EVENTS: Ev[] = JSON.parse(document.getElementById('events-data')!.textContent!);
+  const $ = <T extends HTMLElement = HTMLInputElement>(id: string) => document.getElementById(id) as T;
+  const creds = store<{ client_id: string; client_secret: string }>('ssf.transmitter.creds');
+  const tokenStore = store<{ token: string; exp: number; key: string }>('ssf.transmitter.token');
+  const ORIGIN = location.origin;
+
+  // ── Credentials and token ──────────────────────────────────────────────
+  function newCreds() { return { client_id: `playground-${randomHex(4)}`, client_secret: randomHex(24) }; }
+  function loadCreds() {
+    const c = creds.get() ?? newCreds();
+    creds.set(c);
+    $('client_id').value = c.client_id;
+    $('client_secret').value = c.client_secret;
+    renderCurl();
+  }
+  function currentCreds() { return { client_id: $('client_id').value.trim(), client_secret: $('client_secret').value }; }
+  const credKey = () => `${currentCreds().client_id}\n${currentCreds().client_secret}`;
+
+  async function token(force = false): Promise<string | null> {
+    const t = tokenStore.get();
+    if (!force && t && t.key === credKey() && t.exp > Date.now() / 1000 + 60) return t.token;
+    const c = currentCreds();
+    const r = await api('POST', '/ssf/oauth/token', { form: { grant_type: 'client_credentials', ...c } });
+    if (r.status !== 200) { $('token-out').innerHTML = `<p class="error">${esc(errorText(r))}</p>`; return null; }
+    creds.set(c);
+    tokenStore.set({ token: r.json.access_token, exp: Date.now() / 1000 + r.json.expires_in, key: credKey() });
+    $('token-out').innerHTML = `<p class="muted" style="font-size:.88rem">Token for <code>${esc(c.client_id)}</code>, scope <code>${esc(r.json.scope)}</code>, valid ${Math.round(r.json.expires_in / 60)} minutes.</p>
+      <span class="copy"><input type="text" id="token-val" readonly value="${esc(r.json.access_token)}" /><button class="btn small" data-copy="token-val">Copy</button></span>`;
+    copyButtons($('token-out'));
+    renderCurl();
+    return r.json.access_token;
+  }
+
+  // ── Streams ────────────────────────────────────────────────────────────
+  document.querySelectorAll<HTMLInputElement>('input[name=delivery]').forEach((r) => (r.onchange = () => ($('push-fields').hidden = r.value !== 'push' || !r.checked)));
+
+  $('create-btn').onclick = async () => {
+    const out = $('create-out');
+    const t = await token(); if (!t) return;
+    const mode = document.querySelector<HTMLInputElement>('input[name=delivery]:checked')!.value;
+    const body: Record<string, unknown> = {};
+    if (mode === 'sample') {
+      const rc = await api('POST', '/api/receivers', { body: { issuer: ORIGIN, audience: currentCreds().client_id } });
+      if (rc.status !== 201) { out.innerHTML = `<p class="error">${esc(errorText(rc))}</p>`; return; }
+      body.delivery = { method: 'urn:ietf:rfc:8935', endpoint_url: rc.json.endpoint_url, authorization_header: rc.json.authorization_header };
+    } else if (mode === 'push') {
+      body.delivery = { method: 'urn:ietf:rfc:8935', endpoint_url: $('endpoint_url').value.trim(), ...($('authorization_header').value.trim() ? { authorization_header: $('authorization_header').value.trim() } : {}) };
+    } else {
+      body.delivery = { method: 'urn:ietf:rfc:8936' };
+    }
+    const requested = [...document.querySelectorAll<HTMLInputElement>('input[name=events_requested]:checked')].map((i) => i.value);
+    body.events_requested = requested;
+    if ($('description').value.trim()) body.description = $('description').value.trim();
+    const r = await api('POST', '/ssf/stream', { token: t, body });
+    if (r.status !== 201) { out.innerHTML = `<p class="error">${r.status}: ${esc(errorText(r))}</p>`; return; }
+    const rid = r.json.delivery.endpoint_url?.match(/\/ssf\/push\/([0-9a-f]{32})$/)?.[1];
+    out.innerHTML = `<p>Created <code>${esc(r.json.stream_id)}</code>.${rid ? ` Watch it arrive at <a href="/playground/receiver/#${rid}" target="_blank">your sample Receiver</a>.` : ''}</p>
+      <details><summary style="cursor:pointer;font-size:.9rem">POST /ssf/stream → 201</summary>${pretty(r.json)}</details>`;
+    await listStreams();
+  };
+
+  async function listStreams() {
+    const t = await token(); if (!t) return;
+    const r = await api('GET', '/ssf/stream', { token: t });
+    const el = $('streams');
+    if (r.status !== 200) { el.innerHTML = `<p class="error">${esc(errorText(r))}</p>`; return; }
+    const sel = $<HTMLSelectElement>('fire-stream');
+    const keep = sel.value;
+    sel.innerHTML = '<option value="">All my streams</option>' + r.json.map((s: any) => `<option value="${esc(s.stream_id)}">${esc(s.description ?? s.stream_id)}</option>`).join('');
+    sel.value = r.json.some((s: any) => s.stream_id === keep) ? keep : '';
+    if (!r.json.length) { el.innerHTML = '<p class="muted">No streams yet.</p>'; return; }
+    const statuses = await Promise.all(r.json.map((s: any) => api('GET', `/ssf/status?stream_id=${s.stream_id}`, { token: t })));
+    el.innerHTML = `<div class="table-wrap"><table><thead><tr><th>Stream</th><th>Delivery</th><th>Status</th><th>Actions</th></tr></thead><tbody>${r.json.map((s: any, i: number) => {
+      const st = statuses[i].json?.status ?? '?';
+      const push = s.delivery.method === 'urn:ietf:rfc:8935';
+      const rid = s.delivery.endpoint_url?.match(/\/ssf\/push\/([0-9a-f]{32})$/)?.[1];
+      return `<tr>
+        <td><code style="font-size:.78rem">${esc(s.stream_id)}</code>${s.description ? `<br><span class="muted" style="font-size:.85rem">${esc(s.description)}</span>` : ''}</td>
+        <td style="font-size:.85rem">${push ? `push → ${rid ? `<a href="/playground/receiver/#${rid}" target="_blank">sample Receiver</a>` : esc(s.delivery.endpoint_url)}` : `poll<br><code style="font-size:.72rem">${esc(s.delivery.endpoint_url)}</code>`}<br><span class="muted">${s.events_delivered.length} event types</span></td>
+        <td>${badge(st === 'enabled' ? 'pass' : st === 'paused' ? 'warn' : 'fail', st)}</td>
+        <td><div style="display:flex;flex-wrap:wrap;gap:.3rem">
+          <button class="btn small" data-act="verify" data-id="${esc(s.stream_id)}">Verify</button>
+          ${!push ? `<button class="btn small" data-act="poll" data-id="${esc(s.stream_id)}">Poll</button>` : ''}
+          ${['enabled', 'paused', 'disabled'].filter((x) => x !== st).map((x) => `<button class="btn small" data-act="status" data-status="${x}" data-id="${esc(s.stream_id)}">${x === 'enabled' ? 'Enable' : x === 'paused' ? 'Pause' : 'Disable'}</button>`).join('')}
+          <button class="btn small" data-act="log" data-id="${esc(s.stream_id)}">Log</button>
+          <button class="btn small" data-act="config" data-id="${esc(s.stream_id)}">Config</button>
+          <button class="btn small" data-act="delete" data-id="${esc(s.stream_id)}">Delete</button>
+        </div></td></tr>`;
+    }).join('')}</tbody></table></div><div class="out" id="act-out"></div>`;
+    el.querySelectorAll<HTMLButtonElement>('button[data-act]').forEach((b) => (b.onclick = () => act(b.dataset.act!, b.dataset.id!, b.dataset.status)));
+  }
+
+  let logId = '';
+  async function act(what: string, id: string, status?: string) {
+    const t = await token(); if (!t) return;
+    const show = (html: string) => { const o = document.getElementById('act-out'); if (o) o.innerHTML = html; };
+    if (what === 'verify') {
+      const r = await api('POST', '/ssf/verify', { token: t, body: { stream_id: id, state: randomHex(8) } });
+      show(r.status === 204 ? '<p>Verification requested (204). The Verification event is sent asynchronously; check the log.</p>' : `<p class="error">${r.status}: ${esc(errorText(r))}</p>`);
+      setTimeout(() => showLog(id), 1200);
+    } else if (what === 'status') {
+      const r = await api('POST', '/api/streams/status', { token: t, body: { stream_id: id, status, reason: `Changed from the playground` } });
+      await listStreams(); // re-renders the table, so report afterwards
+      show(r.status === 200 ? `<p>Status is now <code>${esc(r.json.status)}</code>. Stream Updated event: <strong>${esc(r.json.stream_updated?.outcome)}</strong> — ${esc(r.json.stream_updated?.detail)}</p>` : `<p class="error">${esc(errorText(r))}</p>`);
+      showLog(id);
+    } else if (what === 'poll') {
+      const r = await api('POST', `/ssf/poll/${id}`, { token: t, body: { maxEvents: 10, returnImmediately: true } });
+      if (r.status !== 200) { show(`<p class="error">${esc(errorText(r))}</p>`); return; }
+      const jtis = Object.keys(r.json.sets);
+      show(`<p>POST /ssf/poll → ${jtis.length} SET(s)${r.json.moreAvailable ? ', more available' : ''}. ${jtis.length ? '<button class="btn small" id="ack-btn">Acknowledge them</button>' : ''}</p>
+        ${jtis.map((j) => `<details><summary style="cursor:pointer;font-size:.88rem"><code>${esc(j)}</code> <a href="/playground/inspector/#set=${encodeURIComponent(r.json.sets[j])}" target="_blank">inspect</a></summary>${pretty(decodeJwt(r.json.sets[j]))}</details>`).join('')}`);
+      const ack = document.getElementById('ack-btn');
+      if (ack) ack.onclick = async () => { await api('POST', `/ssf/poll/${id}`, { token: t, body: { ack: jtis, maxEvents: 0 } }); show(`<p>Acknowledged ${jtis.length} SET(s).</p>`); showLog(id); };
+    } else if (what === 'log') {
+      showLog(id);
+    } else if (what === 'config') {
+      const r = await api('GET', `/ssf/stream?stream_id=${id}`, { token: t });
+      show(`<p class="muted" style="font-size:.88rem">GET /ssf/stream?stream_id=… → ${r.status}</p>${pretty(r.json)}`);
+    } else if (what === 'delete') {
+      if (!confirm('Delete this stream?')) return;
+      const r = await api('DELETE', `/ssf/stream?stream_id=${id}`, { token: t });
+      if (logId === id) $('log-panel').hidden = true;
+      await listStreams();
+      if (r.status !== 204) show(`<p class="error">${esc(errorText(r))}</p>`);
+    }
+  }
+
+  async function showLog(id: string) {
+    logId = id;
+    const t = await token(); if (!t) return;
+    const r = await api('GET', `/api/streams/log?stream_id=${id}`, { token: t });
+    $('log-panel').hidden = false;
+    $('log-id').textContent = id;
+    if (r.status !== 200) { $('log').innerHTML = `<p class="error">${esc(errorText(r))}</p>`; return; }
+    const { log, queued, subjects } = r.json;
+    $('log').innerHTML = `
+      ${queued.length ? `<p style="font-size:.9rem">${queued.length} SET(s) waiting: ${queued.map((q: any) => `<code>${esc(q.type.split('/').pop())}</code>${q.held ? ' (held)' : q.next_attempt ? ` (retry at ${esc(new Date(q.next_attempt).toLocaleTimeString())})` : ''}`).join(', ')}</p>` : ''}
+      ${subjects.removed.length ? `<p style="font-size:.9rem">Removed subjects: ${subjects.removed.map((s: unknown) => `<code>${esc(JSON.stringify(s))}</code>`).join(', ')}</p>` : ''}
+      <div class="table-wrap"><table style="font-size:.85rem"><thead><tr><th>Time</th><th>What</th><th>Detail</th></tr></thead><tbody>
+      ${log.map((l: any) => `<tr><td class="muted" style="white-space:nowrap">${esc(new Date(l.at).toLocaleTimeString())}</td>
+        <td>${badge(l.ok ? 'pass' : 'fail', l.ok ? 'ok' : 'err')} ${esc(l.action)}${l.event ? `<br><code style="font-size:.75rem">${esc(l.event.split('/').pop())}</code>` : ''}</td>
+        <td style="word-break:break-word">${esc(l.detail ?? '')}${l.jti ? `<br><span class="muted">jti ${esc(l.jti)}</span>` : ''}</td></tr>`).join('')}
+      </tbody></table></div>`;
+  }
+  $('log-btn').onclick = () => logId && showLog(logId);
+
+  // ── Firing events ──────────────────────────────────────────────────────
+  function fillEvent() {
+    const ev = EVENTS.find((e) => e.uri === $<HTMLSelectElement>('fire-type').value)!;
+    $<HTMLTextAreaElement>('fire-sub').value = JSON.stringify(ev.sub_id, null, 2);
+    const body = { ...ev.body };
+    if (ev.uri.includes('/caep/')) body.reason_admin ??= { en: 'Signal sent from the shared-signals.dev playground' };
+    $<HTMLTextAreaElement>('fire-body').value = JSON.stringify(body, null, 2);
+  }
+  $('fire-type').onchange = fillEvent;
+
+  $('fire-btn').onclick = async () => {
+    const out = $('fire-out');
+    let sub_id, event;
+    try { sub_id = JSON.parse($<HTMLTextAreaElement>('fire-sub').value); } catch { out.innerHTML = '<p class="error">sub_id is not valid JSON.</p>'; return; }
+    try { event = JSON.parse($<HTMLTextAreaElement>('fire-body').value || '{}'); } catch { out.innerHTML = '<p class="error">Event claims are not valid JSON.</p>'; return; }
+    const t = await token(); if (!t) return;
+    const stream_id = $<HTMLSelectElement>('fire-stream').value || undefined;
+    const r = await api('POST', '/api/events', { token: t, body: { stream_id, event_type: $<HTMLSelectElement>('fire-type').value, sub_id, event } });
+    if (r.status !== 200) { out.innerHTML = `<p class="error">${r.status}: ${esc(errorText(r))}</p>`; return; }
+    out.innerHTML = `${r.json.notes.map((n: string) => `<p class="muted" style="font-size:.88rem">${esc(n)}</p>`).join('')}
+      <ul class="checks">${r.json.results.map((x: any) => `<li>${badge(x.outcome === 'delivered' || x.outcome === 'queued' ? 'pass' : x.outcome === 'held' || x.outcome === 'skipped' || x.outcome === 'retrying' ? 'warn' : 'fail', x.outcome)}
+        <span><code style="font-size:.78rem">${esc(x.stream_id)}</code> — ${esc(x.detail)}
+        ${x.set ? `<details><summary style="cursor:pointer;font-size:.85rem">SET <a href="/playground/inspector/#set=${encodeURIComponent(x.set)}" target="_blank">inspect</a></summary>${pretty(decodeJwt(x.set))}</details>` : ''}</span></li>`).join('')}</ul>`;
+    if (logId) showLog(logId);
+  };
+
+  // ── curl walkthrough ───────────────────────────────────────────────────
+  function renderCurl() {
+    const c = currentCreds();
+    $('curl-text').textContent = `# 1. Discover the Transmitter
+curl ${ORIGIN}/.well-known/ssf-configuration
+
+# 2. Get an access token (client credentials grant)
+TOKEN=$(curl -s ${ORIGIN}/ssf/oauth/token \\
+  -u '${c.client_id}:${c.client_secret}' \\
+  -d grant_type=client_credentials -d 'scope=ssf.read ssf.manage' | jq -r .access_token)
+
+# 3. Create a push stream to your Receiver
+curl -s ${ORIGIN}/ssf/stream -H "Authorization: Bearer $TOKEN" -H 'Content-Type: application/json' -d '{
+  "delivery": {
+    "method": "urn:ietf:rfc:8935",
+    "endpoint_url": "https://receiver.example.com/events",
+    "authorization_header": "Bearer your-receiver-secret"
+  },
+  "events_requested": ["https://schemas.openid.net/secevent/caep/event-type/session-revoked"]
+}'
+
+# 4. Ask for a Verification event
+curl -i ${ORIGIN}/ssf/verify -H "Authorization: Bearer $TOKEN" -H 'Content-Type: application/json' \\
+  -d '{"stream_id": "<stream_id>", "state": "hello"}'
+
+# Poll streams: omit "delivery" (or use "urn:ietf:rfc:8936"), then
+curl -s ${ORIGIN}/ssf/poll/<stream_id> -H "Authorization: Bearer $TOKEN" -H 'Content-Type: application/json' \\
+  -d '{"maxEvents": 10, "returnImmediately": true, "ack": []}'`;
+  }
+
+  $('token-btn').onclick = () => token(true).then((t) => t && listStreams());
+  $('new-creds').onclick = () => { if (!confirm('Start a new sandbox? Streams under the current credentials stay where they are, but this page will forget them.')) return; creds.set(newCreds()); tokenStore.set(null); loadCreds(); $('token-out').innerHTML = ''; listStreams(); };
+  $('client_id').oninput = $('client_secret').oninput = renderCurl;
+  $('list-btn').onclick = listStreams;
+  copyButtons();
+  loadCreds();
+  fillEvent();
+  listStreams();
+</script>
