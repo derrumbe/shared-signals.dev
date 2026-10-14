@@ -64,3 +64,7 @@ Then — and only then — act on the event.
 SSF lets each integration decide how much weight events carry — from purely informational input,
 through "please re-evaluate", to enforcement the parties have agreed must happen. That agreement
 lives between the Transmitter and Receiver, not in the SET format.
+
+<div class="callout">
+<p><strong>Try it.</strong> Paste any SET into the <a href="/playground/inspector/">SET inspector</a> to decode it and run every check above, signature included. Or point your Transmitter at a <a href="/playground/receiver/">sample Receiver</a> to have every SET it sends checked as it arrives.</p>
+</div>

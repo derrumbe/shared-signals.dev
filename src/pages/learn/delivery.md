@@ -69,3 +69,7 @@ arrive.
 | Latency | Lowest | Poll interval (or long-poll) |
 | Inbound firewall rule needed at Receiver | Yes | No |
 | Back-pressure | Transmitter retries | Receiver controls `maxEvents` |
+
+<div class="callout">
+<p><strong>Try it.</strong> Create a push stream to a <a href="/playground/receiver/">sample Receiver</a> or a poll stream on the <a href="/playground/transmitter/">sample Transmitter</a>, fire an event, and compare: push shows the Receiver’s <code>202</code>; poll lets you fetch and acknowledge SETs yourself.</p>
+</div>

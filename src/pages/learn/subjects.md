@@ -66,3 +66,7 @@ tenant, whatever the user or device.
 and a successful add can reveal that the Transmitter does too. Transmitters should not leak
 whether a subject exists, and should only send events about subjects the Receiver is entitled to.</p>
 </div>
+
+<div class="callout">
+<p><strong>Try it.</strong> The <a href="/playground/transmitter/">sample Transmitter</a> uses <code>default_subjects: "ALL"</code>. Call <code>subjects:remove</code> on a stream, fire an event about that subject, and watch the Transmitter suppress it, then <code>subjects:add</code> it back.</p>
+</div>

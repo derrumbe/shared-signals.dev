@@ -98,3 +98,7 @@ Content-Type: application/json
 The Transmitter responds `204` and then delivers a [`verification`](/events/#ssf-verification) SET
 over the stream, echoing `state`. Seeing that SET arrive confirms discovery, auth, delivery, keys
 and validation are all wired correctly — it's the first thing to test with any new partner.
+
+<div class="callout">
+<p><strong>Try it.</strong> The <a href="/playground/transmitter/">sample Transmitter</a> implements this whole API: create a stream, read its configuration and status, pause and re-enable it, and request verification, from the page or with curl.</p>
+</div>

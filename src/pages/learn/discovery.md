@@ -69,3 +69,7 @@ need to talk to them may fall back to that path.</p>
 
 - Only fetch discovery from an issuer you got from a trusted source, over `https`.
 - Confirm the `issuer` in the document equals the issuer you used to build the URL.
+
+<div class="callout">
+<p><strong>Try it.</strong> Fetch the sample Transmitter’s own metadata at <a href="/.well-known/ssf-configuration"><code>/.well-known/ssf-configuration</code></a> and its keys at <a href="/jwks.json"><code>/jwks.json</code></a>. The <a href="/playground/receiver/">sample Receiver</a> finds the signing key for every SET this way.</p>
+</div>
