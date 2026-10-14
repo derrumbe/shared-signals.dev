@@ -153,12 +153,6 @@ export function initCreds(onChange: () => void) {
     const problem = await deleteSandbox();
     if (problem) document.getElementById('token-out')!.innerHTML = `<p class="error">${esc(problem)}</p>`;
   };
-  document.getElementById('new-creds')!.onclick = () => {
-    if (!confirm('Start a new sandbox? Streams under the current credentials stay where they are, but this page will forget them.')) return;
-    creds.set(newCreds()); tokenStore.set(null); load();
-    document.getElementById('token-out')!.innerHTML = document.getElementById('link-out')!.innerHTML = '';
-    onChange();
-  };
   load();
 }
 
@@ -171,6 +165,12 @@ export async function loadStreams(): Promise<Stream[] | string> {
   if (r.status !== 200) return errorText(r);
   const statuses = await Promise.all(r.json.map((s: Stream) => api('GET', `/ssf/status?stream_id=${s.stream_id}`, { token: t })));
   return r.json.map((s: Stream, i: number) => ({ ...s, status: statuses[i].json?.status ?? '?' }));
+}
+
+/** True when this browser's sandbox has no streams, so switching away from it loses nothing. */
+export async function freshBrowser(): Promise<boolean> {
+  const s = await loadStreams();
+  return Array.isArray(s) && s.length === 0;
 }
 
 export const isPush = (s: Stream) => s.delivery.method === 'urn:ietf:rfc:8935';

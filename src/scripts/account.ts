@@ -1,9 +1,9 @@
 // Optional passkey accounts in the playground: sign in, keep sandboxes, and (by default) have the
-// sample Transmitter send CAEP session-established / session-revoked about you to your saved sandboxes.
+// sample Transmitter send CAEP session-established / session-revoked about you to your sandbox's streams.
 
 import { browserSupportsWebAuthn, startAuthentication, startRegistration } from '@simplewebauthn/browser';
 import { api, badge, errorText, esc } from './playground';
-import { currentCreds, flashStore, forgetSandbox, modeStore, useSandbox } from './session';
+import { currentCreds, flashStore, forgetSandbox, freshBrowser, modeStore, useSandbox } from './session';
 
 const body = () => document.getElementById('acct-body')!;
 const msg = (html: string) => (document.getElementById('acct-msg')!.innerHTML = html);
@@ -22,10 +22,10 @@ async function createAccount() {
   try {
     const response = await startRegistration({ optionsJSON: opts.json });
     // A new account starts with the sandbox you're using, which is almost always what you want.
-    const sandbox = { ...currentCreds(), label: 'My first sandbox' };
+    const sandbox = { ...currentCreds(), label: 'My sandbox' };
     const v = await api('POST', '/api/auth/register/verify', { body: { response, label: deviceLabel(), sandbox } });
     if (v.status !== 200) return fail(errorText(v));
-    msg('<p>Account created and signed in. Your current sandbox is saved to it.</p>');
+    msg('<p>Account created and signed in. Your sandbox is now kept with it.</p>');
     render();
   } catch (e) { passkeyError(e); }
 }
@@ -70,7 +70,7 @@ function chooser() {
     <div class="grid" style="margin-top:1rem;grid-template-columns:repeat(auto-fit,minmax(min(100%,17rem),1fr))">
       <div class="card">
         <h3>With a passkey</h3>
-        <p>Your sandboxes follow you to every device. No email or password: the site stores your passkey’s public key and the sandboxes you save.
+        <p>Your sandbox follows you to every device. No email or password: the site stores your passkey’s public key and your sandbox’s credentials.
         Signing in and out also sends real CAEP <code>session-established</code> / <code>session-revoked</code> events to your streams.</p>
         ${supported ? `<div class="actions" style="margin:.6rem 0 0">
           <button class="btn primary" id="acct-signin">Sign in</button>
@@ -94,7 +94,7 @@ function signedOut() {
   const supported = browserSupportsWebAuthn();
   body().innerHTML = `
     <p class="muted" style="margin:0;font-size:.9rem">No account: this sandbox lives in this browser. Use <strong>Copy sandbox link</strong> to open it elsewhere,
-    or sign in with a passkey to keep it on every device. Accounts store only your passkey’s public key and the sandboxes you save, and are deleted after 90 days unused.</p>
+    or sign in with a passkey to keep it on every device. Accounts store only your passkey’s public key and your sandbox’s credentials, and are deleted after 90 days unused.</p>
     ${supported ? `<div class="actions" style="margin:.8rem 0 0">
       <button class="btn" id="acct-signin">Sign in with passkey</button>
       <button class="btn" id="acct-create">Create account</button>
@@ -104,19 +104,21 @@ function signedOut() {
 }
 
 function signedIn(a: any) {
+  // One sandbox per account, kept in step with this browser (see render()).
   const c = currentCreds();
-  const current = a.sandboxes.find((s: any) => s.client_id === c.client_id && s.client_secret === c.client_secret);
+  const saved = a.sandboxes[0];
+  const current = saved && saved.client_id === c.client_id && saved.client_secret === c.client_secret ? saved : null;
+  const choice = saved && !current
+    ? `<div class="callout" style="margin:.6rem 0"><p style="margin:0">This browser holds a different sandbox (<code>${esc(c.client_id)}</code>) from your account’s
+       (<code>${esc(saved.client_id)}</code>). Which do you want to keep using? The other is not deleted, just no longer loaded here.</p>
+       <div class="actions" style="margin:.6rem 0 0"><button class="btn primary" id="acct-use">Use my account’s sandbox</button>
+       <button class="btn" id="acct-keep">Keep this one (it becomes the account’s)</button></div></div>`
+    : `<p style="margin:.6rem 0 0">Your sandbox: <code>${esc(c.client_id)}</code> ${badge('pass', 'in use')}</p>`;
   body().innerHTML = `
     <p class="muted" style="margin:0;font-size:.88rem">Kept until ${esc(date(a.expires))} unless you use it before then.</p>
-    <h3 style="margin:1rem 0 .3rem">Saved sandboxes</h3>
-    ${a.sandboxes.length ? `<div class="table-wrap"><table><tbody>${a.sandboxes.map((s: any) => `<tr>
-      <td><strong>${esc(s.label)}</strong><br><code style="font-size:.75rem">${esc(s.client_id)}</code></td>
-      <td style="text-align:right;white-space:nowrap">${s === current ? badge('pass', 'in use') : `<button class="btn small" data-use="${esc(s.client_id)}">Use</button>`}
-        <button class="btn small" data-forget="${esc(s.client_id)}">Remove</button></td></tr>`).join('')}</tbody></table></div>`
-      : '<p class="muted">None yet.</p>'}
-    ${current ? '' : `<div class="copy" style="margin:.5rem 0"><input type="text" id="acct-label" placeholder="Name for the current sandbox" maxlength="60" /><button class="btn small" id="acct-save">Save current sandbox</button></div>`}
+    ${choice}
     <label class="radios" style="margin:.8rem 0;font-size:.88rem"><span><input type="checkbox" id="acct-signals" ${a.signals ? 'checked' : ''} />
-      Send CAEP <code>session-established</code> / <code>session-revoked</code> about me to my saved sandboxes when I sign in or out</span></label>
+      Send CAEP <code>session-established</code> / <code>session-revoked</code> about me to my sandbox’s streams when I sign in or out</span></label>
     <details style="margin:.5rem 0"><summary style="cursor:pointer;font-size:.9rem">Passkeys (${a.passkeys.length})</summary>
       <ul class="checks">${a.passkeys.map((p: any) => `<li><span class="muted" style="font-size:.8rem">${esc(date(p.last_used))}</span><span>${esc(p.label)}
         ${a.passkeys.length > 1 ? ` <button class="btn small" data-passkey="${esc(p.id)}">Remove</button>` : ''}</span></li>`).join('')}</ul>
@@ -127,25 +129,16 @@ function signedIn(a: any) {
       <button class="btn" id="acct-delete">Delete account</button>
     </div>`;
 
-  body().querySelectorAll<HTMLButtonElement>('[data-use]').forEach((b) => (b.onclick = () => {
-    const s = a.sandboxes.find((x: any) => x.client_id === b.dataset.use);
-    useSandbox({ client_id: s.client_id, client_secret: s.client_secret });
-  }));
-  body().querySelectorAll<HTMLButtonElement>('[data-forget]').forEach((b) => (b.onclick = async () => {
-    if (!confirm('Remove this sandbox from your account? Its streams are not deleted.')) return;
-    const r = await api('DELETE', `/api/account/sandboxes?client_id=${encodeURIComponent(b.dataset.forget!)}`);
-    r.status === 200 ? render() : fail(errorText(r));
-  }));
+  document.getElementById('acct-use')?.addEventListener('click', () => useSandbox({ client_id: saved.client_id, client_secret: saved.client_secret }));
+  document.getElementById('acct-keep')?.addEventListener('click', async () => {
+    const r = await api('POST', '/api/account/sandboxes', { body: { ...currentCreds(), label: 'My sandbox' } });
+    r.status === 200 ? (msg(''), render()) : fail(errorText(r));
+  });
   body().querySelectorAll<HTMLButtonElement>('[data-passkey]').forEach((b) => (b.onclick = async () => {
     if (!confirm('Remove this passkey? You won’t be able to sign in with it any more.')) return;
     const r = await api('DELETE', `/api/account/passkeys?id=${encodeURIComponent(b.dataset.passkey!)}`);
     r.status === 200 ? render() : fail(errorText(r));
   }));
-  document.getElementById('acct-save')?.addEventListener('click', async () => {
-    const label = (document.getElementById('acct-label') as HTMLInputElement).value;
-    const r = await api('POST', '/api/account/sandboxes', { body: { ...currentCreds(), label } });
-    r.status === 200 ? (msg(''), render()) : fail(errorText(r));
-  });
   document.getElementById('acct-signals')!.onchange = async (e) => {
     const r = await api('PATCH', '/api/account', { body: { signals: (e.target as HTMLInputElement).checked } });
     if (r.status !== 200) fail(errorText(r));
@@ -159,11 +152,11 @@ function signedIn(a: any) {
     msg('<p class="muted">Signed out.</p>'); render();
   };
   document.getElementById('acct-delete')!.onclick = async () => {
-    if (!confirm('Delete your account? Your passkeys stop working here and saved sandboxes are forgotten. The sandboxes and their streams are not deleted.')) return;
+    if (!confirm('Delete your account? Your passkeys stop working here. Your sandbox and its streams are not deleted; use Delete sandbox for that.')) return;
     const r = await api('DELETE', '/api/account');
     if (r.status !== 204) return fail(errorText(r));
     const note = 'Account deleted. You may also want to remove the passkey from your device’s password manager.';
-    if (current) return forgetSandbox(`${note} This browser no longer holds the sandbox that was saved to it.`);
+    if (current) return forgetSandbox(`${note} This browser no longer holds the account’s sandbox.`);
     msg(`<p class="muted">${note}</p>`); render();
   };
 }
@@ -175,7 +168,20 @@ export async function render() {
   const badgeEl = document.getElementById('acct-badge')!;
   if (r.status !== 200) { body().innerHTML = `<p class="error">${esc(errorText(r))}</p>`; return; }
   badgeEl.innerHTML = r.json.signed_in ? badge('pass', 'signed in') : '';
-  if (r.json.signed_in) { modeStore.set('passkey'); reveal(true); signedIn(r.json); return; }
+  if (r.json.signed_in) {
+    modeStore.set('passkey'); reveal(true);
+    // An account without a sandbox (new, or its sandbox was deleted) takes the one this browser holds.
+    if (!r.json.sandboxes.length) {
+      const s = await api('POST', '/api/account/sandboxes', { body: { ...currentCreds(), label: 'My sandbox' } });
+      if (s.status === 200) return signedIn(s.json);
+    }
+    // Signing in on a browser whose own sandbox is empty (fresh, or just signed out) loads the account's;
+    // if it has streams, signedIn() asks which to keep.
+    const saved = r.json.sandboxes[0];
+    const c = currentCreds();
+    if (saved && (saved.client_id !== c.client_id || saved.client_secret !== c.client_secret) && (await freshBrowser())) return useSandbox({ client_id: saved.client_id, client_secret: saved.client_secret });
+    signedIn(r.json); return;
+  }
   // Signed out after having had an account (or chosen none): no need to ask again.
   if (modeStore.get()) { modeStore.set('link'); reveal(true); signedOut(); return; }
   reveal(false);

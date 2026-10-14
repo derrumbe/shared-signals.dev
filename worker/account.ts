@@ -1,10 +1,10 @@
-// Optional passkey accounts for the playground. An account is a set of passkeys plus the sandboxes
-// (client_id + secret) its owner chose to save, so they can be picked up on any device. No email, no
+// Optional passkey accounts for the playground. An account is a set of passkeys plus one sandbox
+// (client_id + secret), so it can be picked up on any device. No email, no
 // name, no password. One Durable Object per account, named by the account id, which is also the
 // WebAuthn user handle: a discoverable-credential sign-in returns it, so no credential index is needed.
 //
 // Signing in and out also produces real CAEP signals: session-established and session-revoked about
-// the account are sent to every stream in the account's saved sandboxes (unless turned off).
+// the account are sent to every stream in the account's sandbox (unless turned off).
 
 import { DurableObject } from 'cloudflare:workers';
 import {
@@ -20,7 +20,6 @@ const SESSION_TTL = 30 * 24 * 3600;
 const CHALLENGE_TTL = 300;
 const IDLE_EXPIRY_MS = 90 * 24 * 3600 * 1000;
 const MAX_PASSKEYS = 10;
-const MAX_SANDBOXES = 10;
 const MAX_SESSIONS = 20;
 
 type Passkey = { id: string; publicKey: string; counter: number; transports?: string[]; label: string; created: number; lastUsed: number };
@@ -111,10 +110,8 @@ export class Account extends DurableObject<Env> {
     const d = await this.data(); if (!d) return 'no such account';
     const { aesKey } = await getSigner(this.env);
     const entry = { client_id, secret: await seal(aesKey, secret), label, saved: Date.now() };
-    const i = d.sandboxes.findIndex((s) => s.client_id === client_id);
-    if (i >= 0) d.sandboxes[i] = entry;
-    else if (d.sandboxes.length >= MAX_SANDBOXES) return `at most ${MAX_SANDBOXES} saved sandboxes per account`;
-    else d.sandboxes.push(entry);
+    // One sandbox per account: saving replaces whatever was there (which is not deleted, just no longer kept).
+    d.sandboxes = [entry];
     await this.save(d);
     return null;
   }
