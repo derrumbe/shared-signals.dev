@@ -56,6 +56,11 @@ h3{font-size:1.15rem;margin:1.8rem 0 .5rem}
 hr{border:0;border-top:1px solid var(--rule);margin:2.5rem 0}
 table{border-collapse:collapse;width:100%;font-size:.92rem;margin:1rem 0}
 th,td{text-align:left;padding:.55rem .7rem;border-bottom:1px solid var(--rule);vertical-align:top}
+/* Inline code may otherwise break at any character, which lets auto table layout squeeze a
+   column of claim names down to "sub_i / d". Keep identifiers in the first column whole. */
+td:first-child>code,th>code{overflow-wrap:normal;white-space:nowrap}
+/* ...and keep the description column readable; on phones the table scrolls sideways instead. */
+td:last-child:not(:first-child){min-width:12rem}
 th{font-weight:600;color:var(--ink-soft);font-size:.8rem;text-transform:uppercase;letter-spacing:.05em}
 .table-wrap{overflow-x:auto}
 
