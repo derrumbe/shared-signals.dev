@@ -6,8 +6,8 @@ import type { Account } from './account';
 export interface Env {
   ASSETS: Fetcher;
   KEYS: DurableObjectNamespace<KeyStore>;
-  TRANSMITTER: DurableObjectNamespace<Transmitter>;
-  RECEIVER: DurableObjectNamespace<Receiver>;
+  SANDBOX: DurableObjectNamespace<Transmitter>;
+  SAMPLE_RECEIVER: DurableObjectNamespace<Receiver>;
   ACCOUNT: DurableObjectNamespace<Account>;
   /** Optional RSA private key (PKCS#8 PEM or JWK). Set with `wrangler secret put SSF_SIGNING_KEY`. */
   SSF_SIGNING_KEY?: string;

@@ -24,11 +24,11 @@ not_found_handling = "404-page"
 # State for the sample Transmitter (one object per OAuth client), Receiver (one per receiver id)
 # and the generated signing key. SQLite-backed, which the Workers Free plan requires.
 [[durable_objects.bindings]]
-name = "TRANSMITTER"
+name = "SANDBOX"
 class_name = "SandboxTransmitter"
 
 [[durable_objects.bindings]]
-name = "RECEIVER"
+name = "SAMPLE_RECEIVER"
 class_name = "SandboxReceiver"
 
 [[durable_objects.bindings]]
@@ -49,7 +49,8 @@ tag = "v2"
 new_sqlite_classes = ["Account"]
 
 # 2026-10-14: one sandbox at a time. Deletes every sandbox and sample Receiver created before
-# (all their storage), and starts fresh classes. Accounts and the signing key are untouched.
+# (all their storage), and starts fresh classes under new binding names (Cloudflare refuses to delete a
+# class while a binding of the old name remains). Accounts and the signing key are untouched.
 [[migrations]]
 tag = "v3"
 deleted_classes = ["Transmitter", "Receiver"]

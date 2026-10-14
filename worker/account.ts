@@ -185,7 +185,7 @@ async function sessionSignal(env: Env, issuer: string, aid: string, sid: string,
   await Promise.all(targets.map(async ({ client_id, secret }) => {
     const tenant = await tenantFor(client_id, secret);
     const ctx: Ctx = { clientId: client_id, tenant, iat: now(), issuer };
-    await env.TRANSMITTER.get(env.TRANSMITTER.idFromName(tenant)).fire(ctx, { event_type: type, sub_id, event: structuredClone(event) });
+    await env.SANDBOX.get(env.SANDBOX.idFromName(tenant)).fire(ctx, { event_type: type, sub_id, event: structuredClone(event) });
   }));
 }
 

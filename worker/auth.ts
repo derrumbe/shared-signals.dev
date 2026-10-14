@@ -97,7 +97,7 @@ export async function revokeEndpoint(request: Request, env: Env, issuer: string)
   const claims = await verifyHs256((await getSigner(env)).hmacKey, form.get('token') ?? '');
   // RFC 7009 §2.2: invalid tokens still get 200.
   if (claims && claims.iss === issuer && typeof claims.tid === 'string') {
-    await env.TRANSMITTER.get(env.TRANSMITTER.idFromName(claims.tid)).revokeTokens(Math.floor(Date.now() / 1000));
+    await env.SANDBOX.get(env.SANDBOX.idFromName(claims.tid)).revokeTokens(Math.floor(Date.now() / 1000));
   }
   return reply(200);
 }

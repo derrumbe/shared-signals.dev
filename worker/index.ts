@@ -151,7 +151,7 @@ async function route(request: Request, env: Env, url: URL, issuer: string): Prom
   const caller = await authenticate(request, env, issuer, pollMatch || !manage ? 'ssf.read' : 'ssf.manage');
   if (!isCaller(caller)) return caller;
   const ctx: Ctx = { clientId: caller.clientId, tenant: caller.tenant, iat: caller.iat, issuer };
-  const tx = env.TRANSMITTER.get(env.TRANSMITTER.idFromName(caller.tenant));
+  const tx = env.SANDBOX.get(env.SANDBOX.idFromName(caller.tenant));
 
   let body: Record<string, any> = {};
   if (method === 'POST' || method === 'PATCH' || method === 'PUT') {
@@ -185,4 +185,4 @@ async function route(request: Request, env: Env, url: URL, issuer: string): Prom
   return error(404, 'not_found', 'Not found.');
 }
 
-const receiver = (env: Env, id: string) => env.RECEIVER.get(env.RECEIVER.idFromName(id));
+const receiver = (env: Env, id: string) => env.SAMPLE_RECEIVER.get(env.SAMPLE_RECEIVER.idFromName(id));
