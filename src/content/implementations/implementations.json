@@ -2,7 +2,7 @@
   {
     "id": "caep-dev",
     "name": "caep.dev",
-    "vendor": "SGNL",
+    "vendor": "CrowdStrike (SGNL)",
     "kind": "test-service",
     "roles": ["transmitter", "receiver"],
     "profiles": ["SSF", "CAEP"],
@@ -46,20 +46,20 @@
     "profiles": ["SSF", "CAEP", "RISC"],
     "delivery": ["push"],
     "url": "https://help.okta.com/oie/en-us/Content/Topics/itp/shared-signals.htm",
-    "source": "https://developer.okta.com/docs/api/openapi/okta-management/management/tag/SSFTransmitter/",
+    "source": "https://developer.okta.com/docs/api/openapi/okta-management/management/tags/ssftransmitter",
     "summary": "Receives CAEP and RISC signals from security vendors and feeds them into entity risk policy (session revocation, Universal Logout, Workflows); transmits session-revoked and credential-change.",
     "interop": ["london-2024", "texas-2024", "london-2025", "authenticate-2025"]
   },
   {
     "id": "sgnl-caep-hub",
     "name": "CAEP Hub",
-    "vendor": "SGNL",
+    "vendor": "CrowdStrike (SGNL)",
     "kind": "product",
     "roles": ["transmitter", "receiver"],
     "profiles": ["SSF", "CAEP"],
     "delivery": ["push"],
     "url": "https://help.sgnl.ai/articles/systems-of-record/creating-and-configuring-ssfevents-caep/",
-    "summary": "SGNL's access-management platform as both SSF Transmitter and Receiver; ingests CAEP events as a real-time system of record for access decisions.",
+    "summary": "SGNL’s access-management platform (now part of CrowdStrike) as both SSF Transmitter and Receiver; ingests CAEP events as a real-time system of record for access decisions.",
     "interop": ["london-2024", "texas-2024", "london-2025", "authenticate-2025"]
   },
   {
@@ -92,7 +92,7 @@
     "roles": ["transmitter", "receiver"],
     "profiles": ["SSF", "CAEP"],
     "delivery": ["push", "poll"],
-    "url": "https://www.ibm.com/docs/en/SSCT62/concepts/c_antenna.html",
+    "url": "https://www.ibm.com/docs/en/security-verify?topic=integrations-verify-antenna",
     "summary": "A lightweight, self-hosted container for IBM Verify that exchanges security events and risk signals using SSF.",
     "interop": ["texas-2024", "london-2025", "authenticate-2025"]
   },
@@ -210,14 +210,14 @@
     "kind": "product",
     "roles": ["transmitter"],
     "profiles": ["SSF", "CAEP"],
-    "url": "https://sgnl.ai/2024/04/sgnl-demonstrates-standards-based-interoperability-with-okta-cisco-sailpoint-and-helisoft",
-    "summary": "Transmitted CAEP events to SGNL at the first interop event. No public SSF documentation found yet; link goes to SGNL's write-up.",
+    "url": "https://openid.net/shared-signals-enhanced-security-for-all/",
+    "summary": "Transmitted CAEP events to SGNL at the first interop event. No public SSF documentation found yet; link goes to the OpenID Foundation’s report, which lists Helisoft.",
     "interop": ["london-2024"]
   },
   {
     "id": "sgnl-secevent",
     "name": "secevent",
-    "vendor": "SGNL",
+    "vendor": "CrowdStrike (SGNL)",
     "kind": "library",
     "roles": ["transmitter", "receiver"],
     "profiles": ["SSF", "CAEP", "RISC"],
@@ -228,7 +228,7 @@
   {
     "id": "sgnl-ssfreceiver",
     "name": "ssfreceiver",
-    "vendor": "SGNL",
+    "vendor": "CrowdStrike (SGNL)",
     "kind": "library",
     "roles": ["receiver"],
     "profiles": ["SSF"],
