@@ -6,6 +6,8 @@ import { api, badge, copyButtons, errorText, esc, randomHex, store } from './pla
 type Creds = { client_id: string; client_secret: string };
 const creds = store<Creds>('ssf.transmitter.creds');
 const receiverStore = store<string>('ssf.receiver');
+/** How this browser chose to keep its sandbox: a passkey account, or locally with a sandbox link. */
+export const modeStore = store<'passkey' | 'link'>('ssf.mode');
 const tokenStore = store<{ token: string; exp: number; key: string }>('ssf.transmitter.token');
 const input = (id: string) => document.getElementById(id) as HTMLInputElement;
 
@@ -61,6 +63,7 @@ export function readHash(): string | undefined {
     alert('That sandbox link is damaged; carrying on with this browser’s sandbox.');
     return undefined;
   }
+  modeStore.set(modeStore.get() ?? 'link');
   const mine = creds.get();
   const differs = mine && (mine.client_id !== link.client_id || mine.client_secret !== link.client_secret);
   if (!differs || confirm(`Open the sandbox "${link.client_id}" from this link?\n\nThis browser’s current sandbox ("${mine!.client_id}") will be forgotten here unless you’ve saved its link. Its streams are not deleted.`)) {

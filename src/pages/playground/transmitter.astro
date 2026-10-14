@@ -25,8 +25,10 @@ const events = EVENTS.filter((e) => e.spec !== 'ssf').map((e) => {
     get a token from <code>/ssf/oauth/token</code> and <code>POST /ssf/stream</code>. See <a href="#curl">the curl walkthrough</a>.</p>
   </div>
 
-  <Credentials heading="1. Credentials" />
   <Account />
+
+  <div id="playground-body" hidden>
+  <Credentials heading="1. Credentials" />
 
   <div class="panel">
     <div style="display:flex;gap:.7rem;align-items:center;flex-wrap:wrap">
@@ -61,6 +63,8 @@ const events = EVENTS.filter((e) => e.spec !== 'ssf').map((e) => {
       <button class="btn small" id="log-btn">Refresh</button>
     </div>
     <div class="out" id="log"></div>
+  </div>
+
   </div>
 
   <div class="prose">

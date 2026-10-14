@@ -3,7 +3,7 @@
 
 import { browserSupportsWebAuthn, startAuthentication, startRegistration } from '@simplewebauthn/browser';
 import { api, badge, errorText, esc } from './playground';
-import { currentCreds, useSandbox } from './session';
+import { currentCreds, modeStore, useSandbox } from './session';
 
 const body = () => document.getElementById('acct-body')!;
 const msg = (html: string) => (document.getElementById('acct-msg')!.innerHTML = html);
@@ -60,16 +60,45 @@ function deviceLabel() {
   return `${os}, added ${new Date().toLocaleDateString()}`;
 }
 
+const reveal = (show: boolean) => (document.getElementById('playground-body')!.hidden = !show);
+
+/** First visit: choose how to keep the sandbox before the playground appears. */
+function chooser() {
+  const supported = browserSupportsWebAuthn();
+  body().innerHTML = `
+    <p style="margin:0">Your playground work lives in a <em>sandbox</em>: a private set of streams and a sample Receiver. How do you want to keep it?</p>
+    <div class="grid" style="margin-top:1rem;grid-template-columns:repeat(auto-fit,minmax(min(100%,17rem),1fr))">
+      <div class="card">
+        <h3>With a passkey</h3>
+        <p>Your sandboxes follow you to every device. No email or password: the site stores your passkey’s public key and the sandboxes you save.
+        Signing in and out also sends real CAEP <code>session-established</code> / <code>session-revoked</code> events to your streams.</p>
+        ${supported ? `<div class="actions" style="margin:.6rem 0 0">
+          <button class="btn primary" id="acct-signin">Sign in</button>
+          <button class="btn" id="acct-create">Create account</button>
+        </div>` : '<p class="error">This browser doesn’t support passkeys.</p>'}
+      </div>
+      <div class="card">
+        <h3>Without an account</h3>
+        <p>The sandbox stays in this browser. To use it somewhere else, copy its sandbox link — anyone with the link can use it.
+        You can create an account later and keep this sandbox.</p>
+        <div class="actions" style="margin:.6rem 0 0"><button class="btn" id="acct-skip">Continue without an account</button></div>
+      </div>
+    </div>`;
+  document.getElementById('acct-signin')?.addEventListener('click', signIn);
+  document.getElementById('acct-create')?.addEventListener('click', createAccount);
+  document.getElementById('acct-skip')!.onclick = () => { modeStore.set('link'); render(); };
+}
+
+/** Chose no account: a one-line reminder, with the passkey options still to hand. */
 function signedOut() {
   const supported = browserSupportsWebAuthn();
   body().innerHTML = `
-    <p class="muted" style="margin:0;font-size:.9rem">Sign in with a passkey to keep your sandboxes on every device. No email or password:
-    the site stores your passkey’s public key and the sandboxes you save, nothing else. Accounts unused for 90 days are deleted.
-    While signed in, signing in and out also sends real CAEP <code>session-established</code> and <code>session-revoked</code> events to your saved sandboxes’ streams.</p>
+    <p class="muted" style="margin:0;font-size:.9rem">No account: this sandbox lives in this browser. Use <strong>Copy sandbox link</strong> to open it elsewhere,
+    or sign in with a passkey to keep it on every device. Accounts store only your passkey’s public key and the sandboxes you save, and are deleted after 90 days unused.</p>
     ${supported ? `<div class="actions" style="margin:.8rem 0 0">
-      <button class="btn primary" id="acct-signin">Sign in with passkey</button>
+      <button class="btn" id="acct-signin">Sign in with passkey</button>
       <button class="btn" id="acct-create">Create account</button>
-    </div>` : '<p class="error">This browser doesn’t support passkeys.</p>'}`;
+    </div>` : ''}`;
   document.getElementById('acct-signin')?.addEventListener('click', signIn);
   document.getElementById('acct-create')?.addEventListener('click', createAccount);
 }
@@ -138,7 +167,11 @@ export async function render() {
   const badgeEl = document.getElementById('acct-badge')!;
   if (r.status !== 200) { body().innerHTML = `<p class="error">${esc(errorText(r))}</p>`; return; }
   badgeEl.innerHTML = r.json.signed_in ? badge('pass', 'signed in') : '';
-  r.json.signed_in ? signedIn(r.json) : signedOut();
+  if (r.json.signed_in) { modeStore.set('passkey'); reveal(true); signedIn(r.json); return; }
+  // Signed out after having had an account (or chosen none): no need to ask again.
+  if (modeStore.get()) { modeStore.set('link'); reveal(true); signedOut(); return; }
+  reveal(false);
+  chooser();
 }
 
 export const initAccount = render;

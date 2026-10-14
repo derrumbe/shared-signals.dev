@@ -12,6 +12,9 @@ const events = EVENTS.filter((e) => e.spec !== 'ssf').map((e) => ({ uri: uri(e),
   Get a push endpoint, connect it to the <a href="/playground/transmitter/">sample Transmitter</a> — or point your own Transmitter at it —
   and every SET that arrives is decoded and checked against SSF 1.0, CAEP and the Interoperability Profile.</p>
 
+  <Account />
+
+  <div id="playground-body" hidden>
   <div class="panel" id="create-panel">
     <h2>1. Your push endpoint</h2>
     <p class="muted" style="margin:0;font-size:.9rem">Both fields are optional. Set them and the receiver rejects SETs whose <code>iss</code> or <code>aud</code> don’t match, as a real Receiver must.
@@ -33,7 +36,6 @@ const events = EVENTS.filter((e) => e.spec !== 'ssf').map((e) => ({ uri: uri(e),
   </div>
 
   <Credentials heading="2. Connect to the sample Transmitter" />
-  <Account />
 
   <div class="panel">
     <h2>3. Create a stream</h2>
@@ -77,6 +79,8 @@ const events = EVENTS.filter((e) => e.spec !== 'ssf').map((e) => ({ uri: uri(e),
       <button class="btn small" id="clear">Clear</button>
     </div>
     <div class="feed" id="feed" style="margin-top:1rem"></div>
+  </div>
+
   </div>
 
   <div class="prose">
