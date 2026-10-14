@@ -95,11 +95,11 @@ const events = EVENTS.filter((e) => e.spec !== 'ssf').map((e) => ({ uri: uri(e),
 
 <script>
   import { api, badge, copyButtons, decodeJwt, errorText, esc, pretty, randomHex, renderChecks, store } from '../../scripts/playground';
-  import { currentCreds, deliveryCell, initCreds, isPush, loadStreams, statusBadge, streamCell, token, type Stream } from '../../scripts/session';
+  import { currentCreds, deliveryCell, initCreds, isPush, loadStreams, readHash, statusBadge, streamCell, token, type Stream } from '../../scripts/session';
 
   const $ = <T extends HTMLElement = HTMLInputElement>(id: string) => document.getElementById(id) as T;
   const remembered = store<string>('ssf.receiver');
-  let id = location.hash.slice(1) || remembered.get() || '';
+  let id = readHash() || remembered.get() || '';
   let receiver: any = null;
   let streams: Stream[] = [];
   let timer: number | undefined;
@@ -254,7 +254,7 @@ const events = EVENTS.filter((e) => e.spec !== 'ssf').map((e) => ({ uri: uri(e),
   $('clear').onclick = async () => { await api('DELETE', `/api/receivers/${id}/events`); loadFeed(); };
   $('auto').onchange = poll;
   $('list-btn').onclick = listStreams;
-  window.addEventListener('hashchange', () => { id = location.hash.slice(1); loadFeed(); });
+  window.addEventListener('hashchange', () => { const h = location.hash.slice(1); if (/^[0-9a-f]{32}$/.test(h)) { id = h; loadFeed(); } });
   copyButtons();
   initCreds(listStreams);
   loadFeed();

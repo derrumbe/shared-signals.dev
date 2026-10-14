@@ -82,7 +82,7 @@ const events = EVENTS.filter((e) => e.spec !== 'ssf').map((e) => {
 
 <script>
   import { api, badge, copyButtons, decodeJwt, errorText, esc, pretty } from '../../scripts/playground';
-  import { currentCreds, deliveryCell, initCreds, loadStreams, statusBadge, streamCell, token, type Stream } from '../../scripts/session';
+  import { currentCreds, deliveryCell, initCreds, loadStreams, readHash, statusBadge, streamCell, token, type Stream } from '../../scripts/session';
 
   type Ev = { uri: string; name: string; sub_id: unknown; body: Record<string, unknown> };
   const EVENTS: Ev[] = JSON.parse(document.getElementById('events-data')!.textContent!);
@@ -204,6 +204,7 @@ curl -s ${ORIGIN}/ssf/poll/<stream_id> -H "Authorization: Bearer $TOKEN" -H 'Con
   $('client_id').oninput = $('client_secret').oninput = renderCurl;
   $('list-btn').onclick = listStreams;
   copyButtons();
+  readHash();
   initCreds(listStreams);
   fillEvent();
   listStreams();
