@@ -13,6 +13,19 @@
     "interop": ["texas-2024", "authenticate-2025"]
   },
   {
+    "id": "shared-signals-dev",
+    "name": "shared-signals.dev playground",
+    "vendor": "shared-signals.dev",
+    "kind": "test-service",
+    "roles": ["transmitter", "receiver"],
+    "profiles": ["SSF", "CAEP", "RISC"],
+    "delivery": ["push", "poll"],
+    "language": "TypeScript",
+    "url": "https://shared-signals.dev/playground/",
+    "source": "https://github.com/derrumbe/shared-signals.dev/tree/main/worker",
+    "summary": "This site’s public sample Transmitter and Receiver, built to the CAEP Interoperability Profile: OAuth-protected stream management, push and poll delivery, every CAEP and RISC event, and a Receiver and SET inspector that check each SET against the specs."
+  },
+  {
     "id": "sailpoint",
     "name": "Identity Security Cloud",
     "vendor": "SailPoint",
