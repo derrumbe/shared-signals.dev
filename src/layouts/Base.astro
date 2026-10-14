@@ -20,6 +20,10 @@ const canonical = new URL(Astro.url.pathname, Astro.site);
     } catch (e) {}
   </script>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <!-- The site has its own light and dark themes (toggle in the header). Declare both, and ask
+       Dark Reader-based "night modes" (e.g. Brave's on iOS) not to darken pages on top of them. -->
+  <meta name="color-scheme" content="light dark" />
+  <meta name="darkreader-lock" />
   <title>{full}</title>
   <meta name="description" content={description} />
   <link rel="canonical" href={canonical} />
