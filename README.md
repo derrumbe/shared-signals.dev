@@ -45,6 +45,9 @@ Built to the CAEP Interoperability Profile checklist. Notes for operators:
   RFC 7638 thumbprint, so switching keys changes the `kid` in `/jwks.json`.
 - **OAuth.** `/ssf/oauth/token` issues HS256 access tokens (60 min, `ssf.read` / `ssf.manage`) to any
   client_id with a 16+ character secret; the hashed pair names a private tenant. No registration, no stored secrets.
+- **Passkey accounts** (optional, `worker/account.ts`): WebAuthn via SimpleWebAuthn, one `Account` Durable Object per
+  account (id = WebAuthn user handle), HttpOnly session cookie, saved sandbox secrets AES-GCM encrypted. Signing in/out
+  fires CAEP `session-established` / `session-revoked` to the account's saved sandboxes. Deleted after 90 days idle.
 - **State** lives only in SQLite-backed Durable Objects (no D1). Idle streams and receivers delete themselves after 7 days.
 - **Abuse limits.** Per-IP rate limit (`RATE_LIMITER`, 120/min), per-tenant quotas, push only to public
   `https` hostnames with no redirects (`worker/ssrf.ts`).

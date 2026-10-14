@@ -1,6 +1,7 @@
 ---
 import Base from '../../layouts/Base.astro';
 import Credentials from '../../components/Credentials.astro';
+import Account from '../../components/Account.astro';
 import { EVENTS, uri } from '../../data/events';
 
 // Event picker data: every CAEP and RISC type, with the catalogue's example claims as a starting point.
@@ -25,6 +26,7 @@ const events = EVENTS.filter((e) => e.spec !== 'ssf').map((e) => {
   </div>
 
   <Credentials heading="1. Credentials" />
+  <Account />
 
   <div class="panel">
     <div style="display:flex;gap:.7rem;align-items:center;flex-wrap:wrap">
@@ -82,6 +84,7 @@ const events = EVENTS.filter((e) => e.spec !== 'ssf').map((e) => {
 
 <script>
   import { api, badge, copyButtons, decodeJwt, errorText, esc, pretty } from '../../scripts/playground';
+  import { initAccount, render as renderAccount } from '../../scripts/account';
   import { currentCreds, deliveryCell, initCreds, loadStreams, readHash, statusBadge, streamCell, token, type Stream } from '../../scripts/session';
 
   type Ev = { uri: string; name: string; sub_id: unknown; body: Record<string, unknown> };
@@ -205,7 +208,8 @@ curl -s ${ORIGIN}/ssf/poll/<stream_id> -H "Authorization: Bearer $TOKEN" -H 'Con
   $('list-btn').onclick = listStreams;
   copyButtons();
   readHash();
-  initCreds(listStreams);
+  initCreds(() => { listStreams(); renderAccount(); });
+  initAccount();
   fillEvent();
   listStreams();
 </script>

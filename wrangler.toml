@@ -35,9 +35,18 @@ class_name = "Receiver"
 name = "KEYS"
 class_name = "KeyStore"
 
+# Optional passkey accounts (one object per account).
+[[durable_objects.bindings]]
+name = "ACCOUNT"
+class_name = "Account"
+
 [[migrations]]
 tag = "v1"
 new_sqlite_classes = ["Transmitter", "Receiver", "KeyStore"]
+
+[[migrations]]
+tag = "v2"
+new_sqlite_classes = ["Account"]
 
 # Per-IP limit on /ssf/* and /api/*. namespace_id is any account-unique integer.
 [[ratelimits]]

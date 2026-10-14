@@ -1,6 +1,7 @@
 ---
 import Base from '../../layouts/Base.astro';
 import Credentials from '../../components/Credentials.astro';
+import Account from '../../components/Account.astro';
 import { EVENTS, uri } from '../../data/events';
 const events = EVENTS.filter((e) => e.spec !== 'ssf').map((e) => ({ uri: uri(e), name: e.name, spec: e.spec, deprecated: !!e.deprecated }));
 ---
@@ -32,6 +33,7 @@ const events = EVENTS.filter((e) => e.spec !== 'ssf').map((e) => ({ uri: uri(e),
   </div>
 
   <Credentials heading="2. Connect to the sample Transmitter" />
+  <Account />
 
   <div class="panel">
     <h2>3. Create a stream</h2>
@@ -95,6 +97,7 @@ const events = EVENTS.filter((e) => e.spec !== 'ssf').map((e) => ({ uri: uri(e),
 
 <script>
   import { api, badge, copyButtons, decodeJwt, errorText, esc, pretty, randomHex, renderChecks, store } from '../../scripts/playground';
+  import { initAccount, render as renderAccount } from '../../scripts/account';
   import { currentCreds, deliveryCell, initCreds, isPush, loadStreams, readHash, statusBadge, streamCell, token, type Stream } from '../../scripts/session';
 
   const $ = <T extends HTMLElement = HTMLInputElement>(id: string) => document.getElementById(id) as T;
@@ -256,7 +259,8 @@ const events = EVENTS.filter((e) => e.spec !== 'ssf').map((e) => ({ uri: uri(e),
   $('list-btn').onclick = listStreams;
   window.addEventListener('hashchange', () => { const h = location.hash.slice(1); if (/^[0-9a-f]{32}$/.test(h)) { id = h; loadFeed(); } });
   copyButtons();
-  initCreds(listStreams);
+  initCreds(() => { listStreams(); renderAccount(); });
+  initAccount();
   loadFeed();
   listStreams();
   poll();

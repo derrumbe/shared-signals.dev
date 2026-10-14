@@ -61,7 +61,7 @@ export async function verifyRs256(d: Decoded, jwk: Jwk): Promise<boolean> {
 // deployment works before anyone has set the secret. Once the secret is set, the generated key
 // is deleted so no unused private key lingers in storage.
 
-export type Signer = { kid: string; publicJwk: Jwk; sign: (header: object, payload: object) => Promise<string>; hmacKey: CryptoKey };
+export type Signer = { kid: string; publicJwk: Jwk; sign: (header: object, payload: object) => Promise<string>; hmacKey: CryptoKey; aesKey: CryptoKey };
 
 let cached: Promise<Signer> | null = null;
 
@@ -88,8 +88,11 @@ async function loadSigner(env: Env): Promise<Signer> {
   // Access tokens are HMAC'd with a key derived from (not equal to) the signing key, so a
   // SET can never be replayed as an access token or vice versa.
   const hmacKey = await crypto.subtle.importKey('raw', await sha256(`ssf-access-token:${privateJwk.d}`), { name: 'HMAC', hash: 'SHA-256' }, false, ['sign', 'verify']);
+  // Encrypts secrets kept server-side (sandbox secrets saved to passkey accounts). Also derived, not equal.
+  const aesKey = await crypto.subtle.importKey('raw', await sha256(`ssf-at-rest:${privateJwk.d}`), 'AES-GCM', false, ['encrypt', 'decrypt']);
   return {
     kid,
+    aesKey,
     publicJwk,
     hmacKey,
     async sign(header, payload) {
@@ -116,14 +119,29 @@ export async function generatePrivateJwk(): Promise<Jwk> {
 
 // ── HS256 access tokens ────────────────────────────────────────────────────────────────────
 
-export async function signHs256(key: CryptoKey, payload: object): Promise<string> {
-  const input = `${b64u(JSON.stringify({ alg: 'HS256', typ: 'at+jwt' }))}.${b64u(JSON.stringify(payload))}`;
+// typ keeps the three kinds of HS256 token this site issues (access tokens, session cookies, WebAuthn
+// challenges) from being accepted in place of one another.
+export async function signHs256(key: CryptoKey, payload: object, typ = 'at+jwt'): Promise<string> {
+  const input = `${b64u(JSON.stringify({ alg: 'HS256', typ }))}.${b64u(JSON.stringify(payload))}`;
   return `${input}.${b64u(await crypto.subtle.sign('HMAC', key, enc.encode(input)))}`;
 }
 
-export async function verifyHs256(key: CryptoKey, token: string): Promise<Record<string, any> | null> {
+export async function verifyHs256(key: CryptoKey, token: string, typ = 'at+jwt'): Promise<Record<string, any> | null> {
   let d: Decoded;
   try { d = decodeJws(token); } catch { return null; }
-  if (d.header.alg !== 'HS256' || d.header.typ !== 'at+jwt') return null;
+  if (d.header.alg !== 'HS256' || d.header.typ !== typ) return null;
   return (await crypto.subtle.verify('HMAC', key, d.signature, enc.encode(d.signingInput))) ? d.payload : null;
+}
+
+// ── AES-GCM for secrets at rest ────────────────────────────────────────────────────────────
+
+export async function seal(key: CryptoKey, plaintext: string): Promise<string> {
+  const iv = crypto.getRandomValues(new Uint8Array(12));
+  const ct = new Uint8Array(await crypto.subtle.encrypt({ name: 'AES-GCM', iv }, key, enc.encode(plaintext)));
+  return `${b64u(iv)}.${b64u(ct)}`;
+}
+
+export async function unseal(key: CryptoKey, sealed: string): Promise<string> {
+  const [iv, ct] = sealed.split('.').map(unb64u);
+  return dec.decode(await crypto.subtle.decrypt({ name: 'AES-GCM', iv }, key, ct));
 }

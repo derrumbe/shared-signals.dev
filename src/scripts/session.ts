@@ -82,6 +82,13 @@ window.addEventListener('hashchange', () => {
   location.reload();
 });
 
+/** Switches this browser to another sandbox (e.g. one saved to a passkey account) and reloads. */
+export function useSandbox(c: Creds) {
+  creds.set(c);
+  tokenStore.set(null);
+  location.reload();
+}
+
 /** Loads stored credentials into the panel and wires its buttons. onChange runs after a new token or sandbox. */
 export function initCreds(onChange: () => void) {
   const load = () => {

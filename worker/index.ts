@@ -11,10 +11,12 @@
  *   POST /ssf/poll/<stream_id>                   Poll delivery (RFC 8936)
  *   POST /ssf/push/<receiver_id>                 Sample Receiver push endpoint (RFC 8935)
  *   *    /api/*                                  Playground helpers: fire events, logs, receivers, inspector
+ *   *    /api/auth/*, /api/account               Optional passkey accounts that remember sandboxes (worker/account.ts)
  *
  * Everything else is a static file from ./dist.
  */
 
+import { accountRoute } from './account';
 import { authenticate, isCaller, revokeEndpoint, SCOPES, tokenEndpoint } from './auth';
 import { error, readJson, readText, reply, toResponse, type Reply } from './http';
 import { getSigner, randomId } from './jose';
@@ -27,11 +29,12 @@ import type { Env } from './env';
 export { KeyStore } from './keys';
 export { Transmitter } from './transmitter';
 export { Receiver } from './receiver';
+export { Account } from './account';
 
 const PUBLIC = { 'access-control-allow-origin': '*' };
 
 export default {
-  async fetch(request: Request, env: Env): Promise<Response> {
+  async fetch(request: Request, env: Env, ec: ExecutionContext): Promise<Response> {
     const url = new URL(request.url);
     const { pathname } = url;
     const issuer = url.origin;
@@ -50,7 +53,7 @@ export default {
     }
 
     try {
-      return toResponse(await route(request, env, url, issuer));
+      return toResponse((await accountRoute(request, env, url, ec)) ?? (await route(request, env, url, issuer)));
     } catch (e: any) {
       console.error(e?.stack ?? e);
       return toResponse(error(500, 'server_error', 'Something went wrong in the sample Transmitter. Please open an issue at github.com/derrumbe/shared-signals.dev.'));

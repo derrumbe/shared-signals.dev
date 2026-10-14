@@ -42,6 +42,21 @@ const repo = 'https://github.com/derrumbe/shared-signals.dev';
       <a href="/working-group/#join">working group</a>, not here.</li>
     </ul>
 
+    <h2 id="privacy">Privacy</h2>
+    <p>Most of the site stores nothing about you. The playground keeps your sandbox credentials in your browser, and sandbox
+    links carry them in the part of the URL that is never sent to a server. What the site does store:</p>
+    <ul>
+      <li><strong>Playground data</strong> — the streams, received SETs and logs you create. They’re deleted after 7 days without use.</li>
+      <li><strong>Optional passkey accounts</strong> — your passkeys’ public keys, a label for each (like “Mac, added 10/14/2026”), the sandboxes
+      you save (secrets encrypted), and active sign-in sessions. No email, name or password. Signing in sets an <code>HttpOnly</code> session
+      cookie, plus a five-minute cookie while a passkey prompt is open; there are no other cookies and no analytics. Accounts are deleted after
+      90 days without use, or immediately from the account panel.</li>
+      <li><strong>Session signals</strong> — while signed in, signing in and out sends CAEP events about your account to streams in sandboxes
+      you saved. They identify you only by a random account id, and you can turn them off.</li>
+    </ul>
+    <p>Pages load their fonts from Google Fonts, so your browser contacts Google when you visit. Don’t put real personal data in events you send;
+    this is a public test service.</p>
+
     <h2 id="built-with">How it’s built</h2>
     <p>Static pages built with <a href="https://astro.build/">Astro</a>, served by a <a href="https://workers.cloudflare.com/">Cloudflare Worker</a>.
     The playground’s Transmitter and Receiver run in the same Worker, with state in Durable Objects; the code is in

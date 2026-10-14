@@ -1,16 +1,21 @@
-export type Reply = { status: number; body?: unknown; headers?: Record<string, string> };
+export type Reply = { status: number; body?: unknown; headers?: Record<string, string | string[]> };
 
-export const reply = (status: number, body?: unknown, headers?: Record<string, string>): Reply => ({ status, body, headers });
+export const reply = (status: number, body?: unknown, headers?: Reply['headers']): Reply => ({ status, body, headers });
 
 /** RFC 6749 §5.2 / RFC 6750 §3.1 style error body. */
-export const error = (status: number, code: string, description: string, headers?: Record<string, string>): Reply =>
+export const error = (status: number, code: string, description: string, headers?: Reply['headers']): Reply =>
   reply(status, { error: code, error_description: description }, headers);
 
 export function toResponse(r: Reply, extra: Record<string, string> = {}): Response {
-  const headers: Record<string, string> = { 'cache-control': 'no-store', ...extra, ...r.headers };
+  const headers = new Headers({ 'cache-control': 'no-store', ...extra });
+  // An array value (e.g. two Set-Cookie headers) becomes repeated headers.
+  for (const [k, v] of Object.entries(r.headers ?? {})) {
+    headers.delete(k);
+    for (const one of Array.isArray(v) ? v : [v]) headers.append(k, one);
+  }
   if (r.body === undefined || r.status === 204) return new Response(null, { status: r.status, headers });
   if (typeof r.body === 'string') return new Response(r.body, { status: r.status, headers });
-  headers['content-type'] ??= 'application/json';
+  if (!headers.has('content-type')) headers.set('content-type', 'application/json');
   return new Response(JSON.stringify(r.body, null, 2), { status: r.status, headers });
 }
 
