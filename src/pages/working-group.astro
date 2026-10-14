@@ -1,0 +1,112 @@
+---
+import Base from '../layouts/Base.astro';
+import { SPEC_URLS, WG } from '../consts';
+import { INTEROP_EVENTS } from '../data/interop';
+
+// Editors as listed in each specification's front matter (openid/sharedsignals @ SPECS_SYNC).
+const specs = [
+  { name: 'Shared Signals Framework (SSF) 1.0', status: 'Final', href: SPEC_URLS.ssf,
+    editors: ['Atul Tulshibagwale', 'Tim Cappalli', 'Marius Scurtescu', 'Annabelle Backman', 'John Bradley', 'Shayne Miel', 'Steve Venema', 'Apoorva Deshpande', 'Sean O’Dell', 'Jen Schreiber', 'Tushar Raibhandare', 'Yair Sarig'] },
+  { name: 'Continuous Access Evaluation Profile (CAEP) 1.0', status: 'Final', href: SPEC_URLS.caep,
+    editors: ['Tim Cappalli', 'Atul Tulshibagwale', 'Apoorva Deshpande'] },
+  { name: 'Risk Incident Sharing and Coordination (RISC) 1.0', status: 'Final', href: SPEC_URLS.risc,
+    editors: ['Marius Scurtescu', 'Annabelle Backman', 'Phil Hunt', 'John Bradley', 'Stan Bounev', 'Atul Tulshibagwale'] },
+  { name: 'CAEP Interoperability Profile 1.0', status: 'Proposed Final, under revision', href: '/specs/caep-interop/',
+    editors: ['Atul Tulshibagwale', 'Apoorva Deshpande', 'Jen Schreiber'] },
+];
+---
+<Base title="Working Group" description="The OpenID Foundation Shared Signals Working Group: what it does, who chairs it, when it meets, its mailing list and repository, and how to take part.">
+  <p class="eyebrow">Working group</p>
+  <h1>The Shared Signals Working Group</h1>
+  <p class="lede">SSF, CAEP and RISC are written by the <a href={SPEC_URLS.wg}>Shared Signals Working Group</a> of the
+  <a href="https://openid.net/">OpenID Foundation</a>. It works in the open: anyone can read the drafts, the mailing list and the meeting notes,
+  and anyone who signs the Foundation’s contribution agreement can take part.</p>
+
+  <div class="grid" style="margin:2rem 0">
+    <div class="card">
+      <span class="tags"><span class="tag neutral">Meetings</span></span>
+      <h3>{WG.meetings}</h3>
+      <p>On Zoom. The join link, a calendar file and notes from every call are on the <a href={WG.meetingsWiki}>wiki</a>.</p>
+    </div>
+    <div class="card">
+      <span class="tags"><span class="tag neutral">Mailing list</span></span>
+      <h3><code style="font-size:.85em">{WG.list}</code></h3>
+      <p><a href={WG.listInfo}>Subscribe</a> to follow along, or read the <a href={WG.listArchive}>archives</a>. The list kept its name from the RISC days.</p>
+    </div>
+    <div class="card">
+      <span class="tags"><span class="tag neutral">Repository</span></span>
+      <h3><a href={SPEC_URLS.github}>openid/sharedsignals</a></h3>
+      <p>Spec sources, issues and pull requests. Working copies are published at <a href={SPEC_URLS.editors}>openid.github.io/sharedsignals</a>.</p>
+    </div>
+  </div>
+
+  <div class="prose">
+    <h2 id="purpose">What it does</h2>
+    <p>From the <a href={WG.charter}>charter</a>, the working group exists to let related systems share security events,
+    state changes and other signals so that they can:</p>
+    <ul>
+      <li>manage access and enforce access control across distributed services in a dynamic environment;</li>
+      <li>stop attackers from turning one compromised account, device, service or endpoint into access to others; and</li>
+      <li>help users, administrators and service providers coordinate to detect and respond to incidents.</li>
+    </ul>
+    <p>In scope: a taxonomy of security events, the privacy implications of sharing them, the transport and stream management
+    mechanisms, trust frameworks, account recovery signals, and implementation best practice. Out of scope: rating account
+    reputation, and building centralised clearinghouses for security events.</p>
+
+    <h2 id="specs">What it publishes</h2>
+  </div>
+  <div class="table-wrap"><table>
+    <thead><tr><th>Specification</th><th>Status</th><th>Editors</th></tr></thead>
+    <tbody>
+      {specs.map((s) => (
+        <tr><td><a href={s.href}>{s.name}</a></td><td style="white-space:nowrap">{s.status}</td><td class="muted" style="font-size:.88rem">{s.editors.join(', ')}</td></tr>
+      ))}
+    </tbody>
+  </table></div>
+  <p class="prose muted" style="font-size:.9rem">See <a href="/specs/">Specs</a> for what each one covers and where it stands.</p>
+
+  <div class="prose">
+    <h2 id="chairs">Chairs</h2>
+    <ul>
+      {WG.chairs.map((c) => <li>{c}</li>)}
+    </ul>
+
+    <h2 id="join">How to take part</h2>
+    <ol>
+      <li><strong>Follow along.</strong> Subscribe to the <a href={WG.listInfo}>mailing list</a> and watch the
+      <a href={SPEC_URLS.github}>GitHub repository</a>. Reading costs nothing and needs no agreement.</li>
+      <li><strong>Sign the contribution agreement.</strong> Posting to the list, joining the calls as a participant and contributing
+      text require the OpenID Foundation’s contribution agreement, which covers the
+      <a href="https://openid.net/intellectual-property/">IPR policy</a>. You can sign as an individual or on behalf of your
+      organisation. OpenID Foundation membership is not required.</li>
+      <li><strong>Join a call.</strong> {WG.meetings}; details on the <a href={WG.meetingsWiki}>meetings page</a>. Agendas usually
+      cover open issues and pull requests, interop planning and new profiles.</li>
+      <li><strong>Open an issue or pull request</strong> on <a href={SPEC_URLS.github}>openid/sharedsignals</a>.</li>
+      <li><strong>Bring an implementation to an interop.</strong> The working group runs interoperability events, usually alongside
+      identity conferences; they are announced on the mailing list.</li>
+    </ol>
+
+    <h2 id="interop">Interop events</h2>
+    <ul>
+      {Object.values(INTEROP_EVENTS).map((e) => <li><a href={e.url}>{e.label}</a> — {e.note}</li>)}
+    </ul>
+    <p>Who took part in each is on the <a href="/implementations/">Implementations</a> page.</p>
+
+    <h2 id="history">History</h2>
+    <p>The group began as the <strong>RISC</strong> (Risk Incident Sharing and Coordination) working group, focused on account
+    security events between providers. In 2019 it was re-chartered with a wider scope as <strong>Shared Signals and Events</strong>,
+    taking in Google’s CAEP proposal for continuous access evaluation alongside RISC, and later became the
+    <strong>Shared Signals</strong> working group. SSF 1.0, CAEP 1.0 and RISC 1.0 were approved as Final Specifications in 2025.</p>
+
+    <h2 id="links">Links</h2>
+    <ul>
+      <li><a href={SPEC_URLS.wg}>Working group home on openid.net</a></li>
+      <li><a href={WG.charter}>Charter</a></li>
+      <li><a href={WG.meetingsWiki}>Meetings and notes</a></li>
+      <li><a href={WG.listInfo}>Mailing list</a> · <a href={WG.listArchive}>archives</a></li>
+      <li><a href={SPEC_URLS.github}>Specifications on GitHub</a> · <a href={SPEC_URLS.editors}>working copies</a></li>
+    </ul>
+    <p class="muted" style="font-size:.85rem">This is an independent summary. If anything here disagrees with
+    <a href={SPEC_URLS.wg}>openid.net</a>, openid.net is right — and please <a href="https://github.com/derrumbe/shared-signals.dev/issues">tell us</a>.</p>
+  </div>
+</Base>

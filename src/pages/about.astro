@@ -1,0 +1,55 @@
+---
+import Base from '../layouts/Base.astro';
+import { SPEC_URLS, SPECS_SYNC } from '../consts';
+const repo = 'https://github.com/derrumbe/shared-signals.dev';
+---
+<Base title="About" description="About shared-signals.dev: an independent developer guide to the OpenID Shared Signals Framework, CAEP and RISC, maintained by Mike Kiser.">
+  <p class="eyebrow">About</p>
+  <h1>About this site</h1>
+  <p class="lede">shared-signals.dev is a developer’s guide to the OpenID Shared Signals Framework, CAEP and RISC: how the
+  standards fit together, every event type, who implements them, and a live Transmitter and Receiver to test against.</p>
+
+  <div class="prose">
+    <h2 id="maintainer">Who runs it</h2>
+    <p>The site is maintained by <strong>Mike Kiser</strong>, a co-chair of the OpenID Foundation’s
+    <a href="/working-group/">Shared Signals Working Group</a>.</p>
+
+    <h2 id="independent">Independent, not official</h2>
+    <p>This is not an OpenID Foundation website, and nothing here is normative. The explanations, examples and sample code are
+    written to make the specifications easier to approach; where they and the specifications disagree, the specifications win.
+    The authoritative texts are on <a href={SPEC_URLS.wg}>openid.net</a>, and their sources are on
+    <a href={SPEC_URLS.github}>GitHub</a>.</p>
+    <p>Spec facts on these pages were last checked against <code>openid/sharedsignals</code> at commit
+    <code>{SPECS_SYNC.commit}</code> ({SPECS_SYNC.date}).</p>
+
+    <h2 id="whats-here">What’s here</h2>
+    <ul>
+      <li><a href="/learn/">Learn</a> — the concepts: streams, SETs, subjects, delivery and discovery.</li>
+      <li><a href="/specs/">Specs</a> — the three Final specifications, the CAEP Interoperability Profile and the RFCs underneath.</li>
+      <li><a href="/events/">Events</a> — every CAEP, RISC and SSF event type, with example SETs.</li>
+      <li><a href="/implementations/">Implementations</a> — products that implement the standards, and the interop events they took part in.</li>
+      <li><a href="/playground/">Playground</a> — a live sample Transmitter and Receiver and a SET inspector.</li>
+      <li><a href="/working-group/">Working group</a> — who writes the specifications, and how to join in.</li>
+    </ul>
+
+    <h2 id="contribute">Contributing</h2>
+    <p>The site is open source at <a href={repo}>github.com/derrumbe/shared-signals.dev</a>. Corrections, new implementations
+    and improvements are welcome:</p>
+    <ul>
+      <li><strong>Found a mistake?</strong> <a href={`${repo}/issues`}>Open an issue</a>, or send a pull request.</li>
+      <li><strong>Ship SSF, CAEP or RISC?</strong> <a href="/implementations/#add">Add your implementation</a>.</li>
+      <li><strong>Want to change the specifications themselves?</strong> That happens in the
+      <a href="/working-group/#join">working group</a>, not here.</li>
+    </ul>
+
+    <h2 id="built-with">How it’s built</h2>
+    <p>Static pages built with <a href="https://astro.build/">Astro</a>, served by a <a href="https://workers.cloudflare.com/">Cloudflare Worker</a>.
+    The playground’s Transmitter and Receiver run in the same Worker, with state in Durable Objects; the code is in
+    <a href={`${repo}/tree/main/worker`}><code>worker/</code></a> and is meant to be read.</p>
+
+    <h2 id="credits">Credits</h2>
+    <p>The standards are the work of the Shared Signals Working Group, its editors and contributors —
+    <a href="/working-group/#specs">listed with each specification</a>. Interop results come from the OpenID Foundation’s
+    reports and participants’ own write-ups, linked on the <a href="/implementations/">Implementations</a> page.</p>
+  </div>
+</Base>
