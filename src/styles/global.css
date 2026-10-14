@@ -165,7 +165,7 @@ button.btn:disabled{opacity:.5;cursor:default}
 .badge.fail{background:color-mix(in srgb,#D33 18%,transparent);color:#D33}
 :root[data-theme="dark"] .badge.fail{color:#FF7B7B}
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .badge.fail{color:#FF7B7B}}
-.feed{display:flex;flex-direction:column;gap:.8rem}
+.feed{display:flex;flex-direction:column;gap:.45rem}
 .feed details{background:var(--bg);border:1px solid var(--rule);border-radius:8px;padding:.6rem .8rem}
 .feed summary{cursor:pointer;display:flex;flex-wrap:wrap;gap:.5rem;align-items:center;font-size:.9rem}
 .feed pre{margin:.5rem 0 0}
@@ -175,3 +175,5 @@ button.btn:disabled{opacity:.5;cursor:default}
 .tray>summary::-webkit-details-marker{display:none}
 .tray>summary::before{content:"▸";display:inline-block;width:1.1em;color:var(--ink-faint);transition:transform .15s}
 .tray[open]>summary::before{transform:rotate(90deg)}
+.event-row>summary .when{margin-left:auto;font-size:.82rem}
+.badge.info{background:var(--bg-2);color:var(--ink-soft)}

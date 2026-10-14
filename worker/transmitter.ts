@@ -22,7 +22,7 @@ export const EVENTS_SUPPORTED = EVENTS.filter((e) => e.spec !== 'ssf').map(uri);
 
 const MAX_STREAMS = 10;
 const MAX_QUEUE = 50;
-const MAX_LOG = 100;
+const MAX_LOG = 60; // entries carry their SET (~1.5 KB), so keep the log short
 const MAX_SUBJECTS = 100;
 const MIN_VERIFICATION_INTERVAL = 15;
 const INACTIVITY_TIMEOUT = 7 * 24 * 3600;
@@ -39,7 +39,7 @@ type Config = {
 };
 type Stream = { config: Config; status: Status; reason?: string; removed: unknown[]; added: unknown[]; lastVerify: number; lastActivity: number; created: number };
 type Queued = { jti: string; set: string; type: string; held: boolean; attempts: number; nextAt: number };
-type LogEntry = { at: number; action: string; ok: boolean; jti?: string; event?: string; detail?: string };
+type LogEntry = { at: number; action: string; ok: boolean; jti?: string; event?: string; detail?: string; set?: string };
 type Meta = { revokedBefore: number; fireWindow: number; fireCount: number };
 
 const now = () => Math.floor(Date.now() / 1000);
@@ -333,7 +333,7 @@ export class Transmitter extends DurableObject<Env> {
     let q = await this.queue(id);
     for (const jti of ack) {
       const e = q.find((x) => x.jti === jti);
-      if (e) await this.log(id, { action: 'acknowledged', ok: true, jti, event: e.type });
+      if (e) await this.log(id, { action: 'acknowledged', ok: true, jti, event: e.type, set: e.set });
     }
     for (const [jti, v] of Object.entries(setErrs as Record<string, any>)) {
       const e = q.find((x) => x.jti === jti);
@@ -419,7 +419,7 @@ export class Transmitter extends DurableObject<Env> {
     if (entry.held || s.config.delivery.method === POLL) {
       await this.enqueue(id, entry);
       const detail = entry.held ? 'held until the stream is enabled again' : 'waiting for the Receiver to poll';
-      await this.log(id, { action: entry.held ? 'held' : 'queued', ok: true, jti, event: type, detail });
+      await this.log(id, { action: entry.held ? 'held' : 'queued', ok: true, jti, event: type, detail, set });
       return { outcome: entry.held ? 'held' : 'queued', jti, detail, set };
     }
     const r = await this.push(s, entry);
@@ -476,7 +476,7 @@ export class Transmitter extends DurableObject<Env> {
       const q = await this.queue(id);
       if (q.some((x) => x.jti === e.jti)) await this.ctx.storage.put(`queue:${id}`, q.filter((x) => x.jti !== e.jti));
     }
-    await this.log(id, { action: ok ? 'pushed' : retry ? 'push failed, will retry' : 'push failed', ok, jti: e.jti, event: e.type, detail });
+    await this.log(id, { action: ok ? 'pushed' : retry ? 'push failed, will retry' : 'push failed', ok, jti: e.jti, event: e.type, detail, set: e.set });
     return { ok, retry, detail };
   }
 

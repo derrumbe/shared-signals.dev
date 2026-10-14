@@ -57,12 +57,16 @@ const events = EVENTS.filter((e) => e.spec !== 'ssf').map((e) => {
     <div class="out" id="fire-out"></div>
   </div>
 
-  <div class="panel" id="log-panel" hidden>
+  <div class="panel" id="log-panel">
     <div style="display:flex;gap:.7rem;align-items:center;flex-wrap:wrap">
-      <h2 style="margin:0;flex:1">Stream log <code id="log-id" style="font-size:.8rem"></code></h2>
+      <h2 style="margin:0;flex:1">4. Event log</h2>
+      <select id="log-stream" style="width:auto;max-width:16rem"><option value="">All my streams</option></select>
+      <span class="radios"><label><input type="checkbox" id="log-auto" checked /> refresh every 5s</label></span>
       <button class="btn small" id="log-btn">Refresh</button>
     </div>
-    <div class="out" id="log"></div>
+    <p class="muted" style="margin:.4rem 0 0;font-size:.85rem">What the Transmitter did, newest first. Click a row for the detail and the SET it sent.</p>
+    <div id="log-status" class="out"></div>
+    <div class="feed" id="log" style="margin-top:1rem"></div>
   </div>
 
   </div>
@@ -87,7 +91,7 @@ const events = EVENTS.filter((e) => e.spec !== 'ssf').map((e) => {
 
 
 <script>
-  import { api, badge, copyButtons, decodeJwt, errorText, esc, pretty } from '../../scripts/playground';
+  import { api, badge, copyButtons, errorText, esc, eventRow, renderRows, type EventRow } from '../../scripts/playground';
   import { initAccount, render as renderAccount } from '../../scripts/account';
   import { currentCreds, deliveryCell, initCreds, loadStreams, readHash, statusBadge, streamCell, token, type Stream } from '../../scripts/session';
 
@@ -109,6 +113,10 @@ const events = EVENTS.filter((e) => e.spec !== 'ssf').map((e) => {
     const keep = sel.value;
     sel.innerHTML = '<option value="">All my streams</option>' + streams.map((s) => `<option value="${esc(s.stream_id)}">${esc(s.description || s.stream_id)}</option>`).join('');
     sel.value = streams.some((s) => s.stream_id === keep) ? keep : '';
+    const ls = $<HTMLSelectElement>('log-stream'), keepLog = ls.value;
+    ls.innerHTML = '<option value="">All my streams</option>' + streams.map((s) => `<option value="${esc(s.stream_id)}">${esc(s.description || s.stream_id)}</option>`).join('');
+    ls.value = streams.some((s) => s.stream_id === keepLog) ? keepLog : '';
+    loadLog();
     if (!streams.length) { el.innerHTML = '<p class="muted">No streams yet. <a href="/playground/receiver/">Create one on the Receiver page</a>.</p>'; return; }
     el.innerHTML = `<div class="table-wrap"><table><thead><tr><th>Stream</th><th>Delivery</th><th>Status</th><th>Actions</th></tr></thead><tbody>${streams.map((s) => `<tr>
         <td>${streamCell(s)}</td><td>${deliveryCell(s)}</td><td>${statusBadge(s.status)}</td>
@@ -119,9 +127,8 @@ const events = EVENTS.filter((e) => e.spec !== 'ssf').map((e) => {
     el.querySelectorAll<HTMLButtonElement>('button[data-act]').forEach((b) => (b.onclick = () => act(b.dataset.act!, b.dataset.id!, b.dataset.status)));
   }
 
-  let logId = '';
   async function act(what: string, sid: string, status?: string) {
-    if (what === 'log') return showLog(sid);
+    if (what === 'log') { $<HTMLSelectElement>('log-stream').value = sid; await loadLog(); $('log-panel').scrollIntoView({ behavior: 'smooth' }); return; }
     const t = await token(); if (!t) return;
     const r = await api('POST', '/api/streams/status', { token: t, body: { stream_id: sid, status, reason: 'Changed by the Transmitter from the playground' } });
     await listStreams(); // re-renders the table, so report afterwards
@@ -129,27 +136,45 @@ const events = EVENTS.filter((e) => e.spec !== 'ssf').map((e) => {
     if (o) o.innerHTML = r.status === 200
       ? `<p><strong>${nameOf(sid)}</strong> is now <code>${esc(r.json.status)}</code>. Stream Updated event: <strong>${esc(r.json.stream_updated?.outcome)}</strong> — ${esc(r.json.stream_updated?.detail)}</p>`
       : `<p class="error">${esc(errorText(r))}</p>`;
-    showLog(sid);
+    loadLog();
   }
 
-  async function showLog(sid: string) {
-    logId = sid;
-    const t = await token(); if (!t) return;
-    const r = await api('GET', `/api/streams/log?stream_id=${sid}`, { token: t });
-    $('log-panel').hidden = false;
-    $('log-id').textContent = streams.find((s) => s.stream_id === sid)?.description || sid;
-    if (r.status !== 200) { $('log').innerHTML = `<p class="error">${esc(errorText(r))}</p>`; return; }
-    const { log, queued, subjects } = r.json;
-    $('log').innerHTML = `
-      ${queued.length ? `<p style="font-size:.9rem">${queued.length} SET(s) waiting: ${queued.map((q: any) => `<code>${esc(q.type.split('/').pop())}</code>${q.held ? ' (held)' : q.next_attempt ? ` (retry at ${esc(new Date(q.next_attempt).toLocaleTimeString())})` : ''}`).join(', ')}</p>` : ''}
-      ${subjects.removed.length ? `<p style="font-size:.9rem">Removed subjects: ${subjects.removed.map((s: unknown) => `<code>${esc(JSON.stringify(s))}</code>`).join(', ')}</p>` : ''}
-      <div class="table-wrap"><table style="font-size:.85rem"><thead><tr><th>Time</th><th>What</th><th>Detail</th></tr></thead><tbody>
-      ${log.map((l: any) => `<tr><td class="muted" style="white-space:nowrap">${esc(new Date(l.at).toLocaleTimeString())}</td>
-        <td>${badge(l.ok ? 'pass' : 'fail', l.ok ? 'ok' : 'err')} ${esc(l.action)}${l.event ? `<br><code style="font-size:.75rem">${esc(l.event.split('/').pop())}</code>` : ''}</td>
-        <td style="word-break:break-word">${esc(l.detail ?? '')}${l.jti ? `<br><span class="muted">jti ${esc(l.jti)}</span>` : ''}</td></tr>`).join('')}
-      </tbody></table></div>`;
+  // ── Event log: every stream's log merged, in the same row format as the Receiver feed ──
+  const LABEL: Record<string, [EventRow['level'], string]> = {
+    pushed: ['pass', 'sent'], queued: ['warn', 'queued'], held: ['warn', 'held'], acknowledged: ['pass', 'acked'],
+    'push failed, will retry': ['warn', 'retrying'], 'push failed': ['fail', 'failed'], 'rejected by Receiver': ['fail', 'rejected'],
+    dropped: ['fail', 'dropped'], suppressed: ['warn', 'skipped'],
+  };
+  function toRow(l: any, s: Stream): { key: string; html: string } {
+    const [level, label] = LABEL[l.action] ?? [l.ok ? 'info' : 'fail', l.ok ? 'info' : 'error'];
+    const via = esc(s.description || s.stream_id);
+    const row: EventRow = l.event
+      ? { at: l.at, level, label, eventType: l.event, via, outcome: l.action, detail: l.detail, set: l.set }
+      : { at: l.at, level, label, title: l.action, via, outcome: '', detail: l.detail };
+    return { key: `${s.stream_id}:${l.at}:${l.action}:${l.jti ?? ''}`, html: eventRow(row) };
   }
-  $('log-btn').onclick = () => logId && showLog(logId);
+
+  async function loadLog() {
+    const t = await token(); if (!t) return;
+    const sel = $<HTMLSelectElement>('log-stream');
+    const which = streams.filter((s) => !sel.value || s.stream_id === sel.value);
+    const results = await Promise.all(which.map((s) => api('GET', `/api/streams/log?stream_id=${s.stream_id}`, { token: t }).then((r) => ({ s, r }))));
+    const rows: { at: number; key: string; html: string }[] = [];
+    const waiting: string[] = [];
+    for (const { s, r } of results) {
+      if (r.status !== 200) continue;
+      for (const l of r.json.log) rows.push({ at: l.at, ...toRow(l, s) });
+      for (const q of r.json.queued) waiting.push(`<code>${esc(q.type.split('/').pop())}</code> on ${esc(s.description || s.stream_id)}${q.held ? ' (held)' : q.next_attempt ? ` (retry at ${esc(new Date(q.next_attempt).toLocaleTimeString())})` : ''}`);
+    }
+    rows.sort((a, b) => b.at - a.at);
+    $('log-status').innerHTML = waiting.length ? `<p style="font-size:.88rem;margin:.6rem 0 0">${waiting.length} SET(s) waiting: ${waiting.join(', ')}</p>` : '';
+    renderRows($('log'), rows.slice(0, 60), `<p class="muted">${streams.length ? 'Nothing logged yet.' : 'No streams yet.'}</p>`);
+  }
+  $('log-btn').onclick = loadLog;
+  $('log-stream').onchange = loadLog;
+  let logTimer: number | undefined;
+  const pollLog = () => { clearInterval(logTimer); if ($('log-auto').checked) logTimer = setInterval(() => { if (!document.hidden && !$('playground-body').hidden) loadLog(); }, 5000) as unknown as number; };
+  $('log-auto').onchange = pollLog;
 
   // ── Firing events ──────────────────────────────────────────────────────
   function fillEvent() {
@@ -170,11 +195,12 @@ const events = EVENTS.filter((e) => e.spec !== 'ssf').map((e) => {
     const stream_id = $<HTMLSelectElement>('fire-stream').value || undefined;
     const r = await api('POST', '/api/events', { token: t, body: { stream_id, event_type: $<HTMLSelectElement>('fire-type').value, sub_id, event } });
     if (r.status !== 200) { out.innerHTML = `<p class="error">${r.status}: ${esc(errorText(r))}</p>`; return; }
+    // A one-line result per stream; the SETs themselves are in the event log below.
     out.innerHTML = `${r.json.notes.map((n: string) => `<p class="muted" style="font-size:.88rem">${esc(n)}</p>`).join('')}
       <ul class="checks">${r.json.results.map((x: any) => `<li>${badge(x.outcome === 'delivered' || x.outcome === 'queued' ? 'pass' : x.outcome === 'held' || x.outcome === 'skipped' || x.outcome === 'retrying' ? 'warn' : 'fail', x.outcome)}
-        <span><strong>${nameOf(x.stream_id)}</strong> — ${esc(x.detail)}
-        ${x.set ? `<details><summary style="cursor:pointer;font-size:.85rem">SET <a href="/playground/inspector/#set=${encodeURIComponent(x.set)}" target="_blank">inspect</a></summary>${pretty(decodeJwt(x.set))}</details>` : ''}</span></li>`).join('')}</ul>`;
-    if (logId) showLog(logId);
+        <span><strong>${nameOf(x.stream_id)}</strong> — ${esc(x.detail)}</span></li>`).join('')}</ul>
+      <p class="muted" style="font-size:.85rem">See the <a href="#log-panel">event log</a> for the SETs.</p>`;
+    loadLog();
   };
 
   // ── curl walkthrough ───────────────────────────────────────────────────
@@ -216,4 +242,5 @@ curl -s ${ORIGIN}/ssf/poll/<stream_id> -H "Authorization: Bearer $TOKEN" -H 'Con
   initAccount();
   fillEvent();
   listStreams();
+  pollLog();
 </script>

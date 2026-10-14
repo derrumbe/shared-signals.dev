@@ -100,7 +100,7 @@ const events = EVENTS.filter((e) => e.spec !== 'ssf').map((e) => ({ uri: uri(e),
 </Base>
 
 <script>
-  import { api, badge, copyButtons, checksTray, decodeJwt, errorText, esc, pretty, randomHex, store } from '../../scripts/playground';
+  import { api, copyButtons, decodeJwt, errorText, esc, eventRow, pretty, randomHex, renderRows, store } from '../../scripts/playground';
   import { initAccount, render as renderAccount } from '../../scripts/account';
   import { currentCreds, deliveryCell, initCreds, isPush, loadStreams, readHash, statusBadge, streamCell, token, type Stream } from '../../scripts/session';
 
@@ -144,19 +144,14 @@ const events = EVENTS.filter((e) => e.spec !== 'ssf').map((e) => ({ uri: uri(e),
   }
 
   function renderFeed(events: any[]) {
-    if (!events.length) { $('feed').innerHTML = '<p class="muted">Nothing yet. Create a stream above and fire an event from the <a href="/playground/transmitter/">Transmitter</a>, or push from your own.</p>'; return; }
-    $('feed').innerHTML = events.map((e, i) => {
-      const type = e.event_type ? e.event_type.split('/').pop() : 'unreadable SET';
-      const from = streamName(e);
-      return `<details${i === 0 ? ' open' : ''}>
-        <summary>${badge(e.verdict)} <code>${esc(type)}</code> ${from ? `<span>via ${from}</span>` : ''} <span class="muted">${esc(new Date(e.at).toLocaleTimeString())} · responded ${esc(e.status)}</span></summary>
-        ${checksTray(e.checks)}
-        ${e.response ? `<p class="muted" style="font-size:.85rem;margin:.5rem 0 0">Response body</p>${pretty(e.response)}` : ''}
-        ${e.header ? `<p class="muted" style="font-size:.85rem;margin:.5rem 0 0">Header</p>${pretty(e.header)}` : ''}
-        ${e.payload ? `<p class="muted" style="font-size:.85rem;margin:.5rem 0 0">Payload</p>${pretty(e.payload)}` : ''}
-        <p class="muted" style="font-size:.85rem;margin:.5rem 0 0">Raw</p><pre><code style="word-break:break-all;white-space:pre-wrap">${esc(e.raw)}</code></pre>
-      </details>`;
-    }).join('');
+    renderRows($('feed'), events.map((e) => ({
+      key: `${e.at}:${e.payload?.jti ?? ''}`,
+      html: eventRow({
+        at: e.at, level: e.verdict, eventType: e.event_type, title: e.event_type ? undefined : 'unreadable SET', via: streamName(e),
+        outcome: `responded ${e.status}${e.response?.err ? ` ${e.response.err}` : ''}`,
+        response: e.response, checks: e.checks, set: e.raw, header: e.header, payload: e.payload,
+      }),
+    })), '<p class="muted">Nothing yet. Create a stream above and fire an event from the <a href="/playground/transmitter/">Transmitter</a>, or push from your own.</p>');
   }
 
   async function loadFeed() {
