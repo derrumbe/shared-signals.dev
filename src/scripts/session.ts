@@ -102,6 +102,29 @@ export function forgetSandbox(flash: string) {
 /** A one-off message to show after a reload. */
 export const flashStore = store<string>('ssf.flash');
 
+/**
+ * Deletes this sandbox for good: its streams, queues and logs on the Transmitter (revoking its
+ * tokens), its sample Receiver and what that received, and its entry in a passkey account. Then
+ * starts this browser on a fresh, empty sandbox.
+ */
+export async function deleteSandbox(): Promise<string | null> {
+  const t = await token();
+  if (!t) return 'Could not get a token for this sandbox, so nothing was deleted.';
+  const r = await api('DELETE', '/api/sandbox', { token: t });
+  if (r.status !== 204) return `Could not delete the sandbox: ${errorText(r)}`;
+  const receiver = receiverStore.get();
+  if (receiver) await api('DELETE', `/api/receivers/${receiver}`);
+  // Only matters when signed in with this sandbox saved; a 401 or no-op otherwise.
+  await api('DELETE', `/api/account/sandboxes?client_id=${encodeURIComponent(currentCreds().client_id)}`);
+  creds.set(null);
+  tokenStore.set(null);
+  receiverStore.set(null);
+  modeStore.set(null); // back to the starting choice (signed-in users go straight to their account)
+  flashStore.set('Sandbox deleted: its streams, events and sample Receiver are gone.');
+  location.replace(location.pathname);
+  return null;
+}
+
 /** Switches this browser to another sandbox (e.g. one saved to a passkey account) and reloads. */
 export function useSandbox(c: Creds) {
   creds.set(c);
@@ -124,6 +147,11 @@ export function initCreds(onChange: () => void) {
       <span class="copy"><input type="text" id="link-val" readonly value="${esc(sandboxLink())}" /><button class="btn small" data-copy="link-val">Copy</button></span>`;
     copyButtons(out);
     try { await navigator.clipboard.writeText(sandboxLink()); (out.querySelector('button') as HTMLButtonElement).textContent = 'Copied'; } catch {}
+  };
+  document.getElementById('delete-sandbox')!.onclick = async () => {
+    if (!confirm(`Delete the sandbox "${currentCreds().client_id}"?\n\nIts streams, queued events, logs and sample Receiver are deleted for good, for everyone who has its link. This can’t be undone.`)) return;
+    const problem = await deleteSandbox();
+    if (problem) document.getElementById('token-out')!.innerHTML = `<p class="error">${esc(problem)}</p>`;
   };
   document.getElementById('new-creds')!.onclick = () => {
     if (!confirm('Start a new sandbox? Streams under the current credentials stay where they are, but this page will forget them.')) return;

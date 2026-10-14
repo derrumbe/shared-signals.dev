@@ -81,8 +81,6 @@ const events = EVENTS.filter((e) => e.spec !== 'ssf').map((e) => ({ uri: uri(e),
     <div class="feed" id="feed" style="margin-top:1rem"></div>
   </div>
 
-  </div>
-
   <div class="prose">
     <h2>What gets checked</h2>
     <ul>
@@ -97,6 +95,8 @@ const events = EVENTS.filter((e) => e.spec !== 'ssf').map((e) => ({ uri: uri(e),
     <code>invalid_request</code>); one that passes gets <code>202 Accepted</code>. Warnings don’t cause a rejection.
     To check a SET without sending it, use the <a href="/playground/inspector/">SET inspector</a>.</p>
   </div>
+  </div>
+
 </Base>
 
 <script>

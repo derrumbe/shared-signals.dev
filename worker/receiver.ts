@@ -53,6 +53,13 @@ export class Receiver extends DurableObject<Env> {
     return reply(204);
   }
 
+  /** Deletes the receiver and everything it received. Anyone with its id can, as anyone with it can view it. */
+  async destroy(): Promise<Reply> {
+    await this.ctx.storage.deleteAlarm();
+    await this.ctx.storage.deleteAll();
+    return reply(204);
+  }
+
   /**
    * Handles one RFC 8935 push. Returns the HTTP response the Transmitter gets.
    * viaStream is set only when this site's own Transmitter delivers directly (not over HTTP), so the

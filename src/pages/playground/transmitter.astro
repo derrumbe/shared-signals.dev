@@ -69,8 +69,6 @@ const events = EVENTS.filter((e) => e.spec !== 'ssf').map((e) => {
     <div class="feed" id="log" style="margin-top:1rem"></div>
   </div>
 
-  </div>
-
   <div class="prose">
     <h2 id="curl">Connect your own Receiver</h2>
     <p>Use any <code>client_id</code> and a secret of 16+ characters. Tokens last an hour and carry
@@ -84,6 +82,8 @@ const events = EVENTS.filter((e) => e.spec !== 'ssf').map((e) => {
       <li><code>default_subjects</code> is <code>ALL</code>: every subject is in every stream until you call <code>subjects:remove</code>.</li>
       <li>This is a test service. Don’t send real personal data, and don’t rely on it staying up.</li>
     </ul>
+  </div>
+
   </div>
 
   <script type="application/json" id="events-data" set:html={JSON.stringify(events)} />

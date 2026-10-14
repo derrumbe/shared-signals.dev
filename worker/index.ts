@@ -118,7 +118,8 @@ async function route(request: Request, env: Env, url: URL, issuer: string): Prom
     if (rcv[2]) return method === 'DELETE' ? stub.clear() : allow('DELETE');
     if (method === 'GET') return stub.view();
     if (method === 'PATCH') { const j = await readJson(request); if ('fail' in j) return j.fail; return stub.update(j.body); }
-    return allow('GET', 'PATCH');
+    if (method === 'DELETE') return stub.destroy();
+    return allow('GET', 'PATCH', 'DELETE');
   }
 
   // ── SET inspector ──────────────────────────────────────────────────────
@@ -141,7 +142,7 @@ async function route(request: Request, env: Env, url: URL, issuer: string): Prom
   // ── Transmitter: everything below needs a bearer token ─────────────────
   const manage = method !== 'GET';
   const pollMatch = pathname.match(/^\/ssf\/poll\/([0-9a-f]{32})$/);
-  const known = ['/ssf/stream', '/ssf/status', '/ssf/subjects:add', '/ssf/subjects:remove', '/ssf/verify', '/api/events', '/api/streams/status', '/api/streams/log'];
+  const known = ['/ssf/stream', '/ssf/status', '/ssf/subjects:add', '/ssf/subjects:remove', '/ssf/verify', '/api/events', '/api/streams/status', '/api/streams/log', '/api/sandbox'];
   if (!pollMatch && !known.includes(pathname)) return error(404, 'not_found', `No endpoint at ${pathname}. See ${issuer}/.well-known/ssf-configuration.`);
 
   // Polling only reads, so ssf.read is enough even though it is a POST.
@@ -177,6 +178,7 @@ async function route(request: Request, env: Env, url: URL, issuer: string): Prom
     case '/api/events': return method === 'POST' ? tx.fire(ctx, body) : allow('POST');
     case '/api/streams/status': return method === 'POST' ? tx.adminStatus(ctx, body) : allow('POST');
     case '/api/streams/log': return method === 'GET' ? tx.logFor(ctx, param('stream_id')) : allow('GET');
+    case '/api/sandbox': return method === 'DELETE' ? tx.deleteSandbox(ctx) : allow('DELETE');
   }
   return error(404, 'not_found', 'Not found.');
 }

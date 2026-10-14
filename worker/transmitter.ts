@@ -392,6 +392,17 @@ export class Transmitter extends DurableObject<Env> {
     return reply(200, { event_type: type, txn, notes, results });
   }
 
+  /** Deletes the whole sandbox: every stream, queue and log. Tokens issued so far stop working. */
+  async deleteSandbox(c: Ctx): Promise<Reply> {
+    const g = await this.guard(c); if (g) return g;
+    await this.ctx.storage.deleteAlarm();
+    await this.ctx.storage.deleteAll();
+    await this.revokeTokens(now());
+    // The revocation record only matters until those tokens expire; the alarm then clears it.
+    await this.ctx.storage.setAlarm(Date.now() + 3600 * 1000);
+    return reply(204);
+  }
+
   async logFor(c: Ctx, id: string | null): Promise<Reply> {
     const g = await this.guard(c); if (g) return g;
     const s = await this.find(c, id); if (isReply(s)) return s;
