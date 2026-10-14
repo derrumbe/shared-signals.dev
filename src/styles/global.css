@@ -157,7 +157,9 @@ button.btn:disabled{opacity:.5;cursor:default}
 .copy{display:flex;gap:.4rem;align-items:stretch}
 .copy input{flex:1}
 .checks{list-style:none;margin:.5rem 0;padding:0;font-size:.88rem}
-.checks li{display:grid;grid-template-columns:5rem 1fr;gap:.6rem;padding:.25rem 0;border-top:1px solid var(--rule)}
+.checks li{display:grid;grid-template-columns:5rem minmax(0,1fr);gap:.6rem;padding:.25rem 0;border-top:1px solid var(--rule)}
+/* Key ids, jtis and URLs have no break points; let them wrap anywhere rather than push past the screen. */
+.checks li>span{min-width:0;overflow-wrap:anywhere}
 .checks li:first-child{border-top:0}
 .badge{display:inline-block;font:600 .68rem/1 var(--mono);text-transform:uppercase;letter-spacing:.05em;padding:.3em .5em;border-radius:4px;text-align:center;align-self:start}
 .badge.pass{background:var(--accent-soft);color:var(--accent)}
@@ -177,3 +179,14 @@ button.btn:disabled{opacity:.5;cursor:default}
 .tray[open]>summary::before{transform:rotate(90deg)}
 .event-row>summary .when{margin-left:auto;font-size:.82rem}
 .badge.info{background:var(--bg-2);color:var(--ink-soft)}
+/* Status lines like "202 Accepted from https://…/ssf/push/<id>" have no break points. */
+.panel p,.panel li{overflow-wrap:break-word}
+/* On phones, let stream ids and URLs in playground tables wrap so the table fits instead of scrolling. */
+@media (max-width:600px){.panel td code,.panel td{overflow-wrap:anywhere}.panel td:first-child>code{white-space:normal}.panel td .btn.small{padding:.3rem .5rem}}
+/* On phones the stream list stacks: one card per stream instead of four squeezed columns. */
+@media (max-width:600px){
+  #streams table,#streams tbody,#streams tr,#streams td{display:block;width:auto}
+  #streams thead{display:none}
+  #streams tr{border:1px solid var(--rule);border-radius:8px;padding:.5rem .7rem;margin:0 0 .6rem}
+  #streams td{border:0;padding:.2rem 0}
+}
