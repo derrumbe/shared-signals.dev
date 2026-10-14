@@ -129,8 +129,7 @@
     "roles": ["transmitter"],
     "profiles": ["SSF", "CAEP"],
     "delivery": ["push"],
-    "url": "https://openid.net/top-firms-test-interoperability-of-final-ssf-and-caep/",
-    "summary": "Push Transmitter in OIDF interop results. No public SSF documentation found yet; link goes to the interop results.",
+    "summary": "Push Transmitter in OIDF interop results.",
     "interop": ["texas-2024", "london-2025", "authenticate-2025"]
   },
   {
@@ -141,8 +140,7 @@
     "roles": ["receiver"],
     "profiles": ["SSF", "CAEP"],
     "delivery": ["push"],
-    "url": "https://openid.net/shared-signals-interoperability-at-gartner-iam/",
-    "summary": "Push Receiver in OIDF interop results. No public SSF product documentation found yet; link goes to the interop results.",
+    "summary": "Push Receiver in OIDF interop results.",
     "interop": ["texas-2024", "london-2025"]
   },
   {
@@ -153,8 +151,7 @@
     "roles": ["transmitter"],
     "profiles": ["SSF", "CAEP"],
     "delivery": ["push"],
-    "url": "https://openid.net/shared-signals-interoperability-at-gartner-iam/",
-    "summary": "SaaS security; push Transmitter in OIDF interop results. No public SSF documentation found yet; link goes to the interop results.",
+    "summary": "SaaS security; push Transmitter in OIDF interop results.",
     "interop": ["texas-2024"]
   },
   {
@@ -165,8 +162,7 @@
     "roles": ["receiver"],
     "profiles": ["SSF", "CAEP"],
     "delivery": ["poll"],
-    "url": "https://openid.net/shared-signals-interoperability-at-gartner-iam/",
-    "summary": "Identity governance; poll Receiver in OIDF interop results. No public SSF documentation found yet; link goes to the interop results.",
+    "summary": "Identity governance; poll Receiver in OIDF interop results.",
     "interop": ["texas-2024"]
   },
   {
@@ -177,8 +173,7 @@
     "roles": ["transmitter", "receiver"],
     "profiles": ["SSF", "CAEP"],
     "delivery": ["push", "poll"],
-    "url": "https://openid.net/shared-signals-interoperability-at-gartner-iam/",
-    "summary": "Privileged access; Transmitter and Receiver in OIDF interop results. No public SSF documentation found yet; link goes to the interop results.",
+    "summary": "Privileged access; Transmitter and Receiver in OIDF interop results.",
     "interop": ["texas-2024"]
   },
   {
@@ -188,8 +183,7 @@
     "kind": "product",
     "roles": ["transmitter", "receiver"],
     "profiles": ["SSF", "CAEP"],
-    "url": "https://openid.net/shared-signals-interoperability-at-gartner-iam/",
-    "summary": "Endpoint authentication; Transmitter (push and poll) and push Receiver in OIDF interop results. No public SSF documentation found yet; link goes to the interop results.",
+    "summary": "Endpoint authentication; Transmitter (push and poll) and push Receiver in OIDF interop results.",
     "interop": ["texas-2024"]
   },
   {
@@ -199,7 +193,6 @@
     "kind": "product",
     "roles": ["transmitter"],
     "profiles": ["SSF", "RISC"],
-    "url": "https://www.vericlouds.com/",
     "summary": "Compromised-credential intelligence; has demonstrated an SSF Transmitter for the RISC credential-compromise event. VeriClouds contributed to the RISC specification.",
     "interop": ["london-2024"]
   },
@@ -210,8 +203,7 @@
     "kind": "product",
     "roles": ["transmitter"],
     "profiles": ["SSF", "CAEP"],
-    "url": "https://openid.net/shared-signals-enhanced-security-for-all/",
-    "summary": "Transmitted CAEP events to SGNL at the first interop event. No public SSF documentation found yet; link goes to the OpenID Foundation’s report, which lists Helisoft.",
+    "summary": "Transmitted CAEP events to SGNL at the first interop event.",
     "interop": ["london-2024"]
   },
   {

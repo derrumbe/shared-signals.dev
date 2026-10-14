@@ -32,9 +32,10 @@ const cap = (s: string) => s[0].toUpperCase() + s.slice(1);
             {g.items.map((i) => (
               <tr>
                 <td>
-                  <a href={i.url}><strong>{i.name}</strong></a>
+                  {i.url ? <a href={i.url}><strong>{i.name}</strong></a> : <strong>{i.name}</strong>}
                   {i.name !== i.vendor && <><br /><span class="muted">{i.vendor}</span></>}
                   {i.language && <><br /><span class="muted">{i.language}</span></>}
+                  {!i.url && <><br /><span class="muted" style="font-size:.82rem">No public documentation</span></>}
                 </td>
                 <td>
                   {i.roles.map(cap).join(' + ')}

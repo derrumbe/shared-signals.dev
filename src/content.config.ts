@@ -17,7 +17,9 @@ const implementations = defineCollection({
     delivery: z.array(z.enum(['push', 'poll'])).optional(),
     language: z.string().optional(),
     license: z.string().optional(),
-    url: z.string().url(),
+    // Link to the vendor's own SSF documentation. Leave it out when there is none; the page then says
+    // so rather than linking somewhere else.
+    url: z.string().url().optional(),
     source: z.string().url().optional(),
     summary: z.string(),
     // OpenID Foundation interop events this implementation took part in.
