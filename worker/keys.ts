@@ -15,4 +15,11 @@ export class KeyStore extends DurableObject<Env> {
       return jwk;
     });
   }
+
+  /** Deletes the generated key. Called once SSF_SIGNING_KEY is set, so the old key doesn't linger. */
+  async forget(): Promise<void> {
+    if ((await this.ctx.storage.get('private-jwk')) === undefined) return;
+    await this.ctx.storage.deleteAll();
+    console.log('SSF_SIGNING_KEY is set: deleted the previously generated signing key');
+  }
 }

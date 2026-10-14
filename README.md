@@ -40,7 +40,8 @@ Built to the CAEP Interoperability Profile checklist. Notes for operators:
 
 - **Signing key.** Set `SSF_SIGNING_KEY` (RSA PKCS#8 PEM or JWK, 2048+ bits):
   `openssl genpkey -algorithm RSA -pkeyopt rsa_keygen_bits:2048 | npx wrangler secret put SSF_SIGNING_KEY`.
-  Until then the Worker generates a key once and keeps it in the `KEYS` Durable Object. The `kid` is the
+  Until then the Worker generates a key once and keeps it in the `KEYS` Durable Object; once the
+  secret is set, that generated key is deleted. The `kid` is the
   RFC 7638 thumbprint, so switching keys changes the `kid` in `/jwks.json`.
 - **OAuth.** `/ssf/oauth/token` issues HS256 access tokens (60 min, `ssf.read` / `ssf.manage`) to any
   client_id with a 16+ character secret; the hashed pair names a private tenant. No registration, no stored secrets.

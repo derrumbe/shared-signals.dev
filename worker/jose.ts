@@ -58,7 +58,8 @@ export async function verifyRs256(d: Decoded, jwk: Jwk): Promise<boolean> {
 // ── Transmitter signing key ────────────────────────────────────────────────────────────────
 // Preferred: an RSA private key in the SSF_SIGNING_KEY secret (PKCS#8 PEM or JWK JSON).
 // Fallback: a 2048-bit key generated once and kept in the KeyStore Durable Object, so a fresh
-// deployment works before anyone has set the secret.
+// deployment works before anyone has set the secret. Once the secret is set, the generated key
+// is deleted so no unused private key lingers in storage.
 
 export type Signer = { kid: string; publicJwk: Jwk; sign: (header: object, payload: object) => Promise<string>; hmacKey: CryptoKey };
 
@@ -71,11 +72,13 @@ export function getSigner(env: Env): Promise<Signer> {
 
 async function loadSigner(env: Env): Promise<Signer> {
   let privateJwk: Jwk;
+  const store = env.KEYS.get(env.KEYS.idFromName('signing-key'));
   if (env.SSF_SIGNING_KEY) {
     privateJwk = await parsePrivateKey(env.SSF_SIGNING_KEY);
+    // Once per isolate; a no-op after the first time. Signing doesn't depend on it succeeding.
+    await store.forget().catch((e) => console.error('could not delete the generated signing key', e));
   } else {
-    const stub = env.KEYS.get(env.KEYS.idFromName('signing-key'));
-    privateJwk = await stub.privateJwk();
+    privateJwk = await store.privateJwk();
   }
   const key = await crypto.subtle.importKey('jwk', { ...privateJwk, alg: 'RS256' }, RS256, false, ['sign']);
   const publicJwk: Jwk = { kty: 'RSA', n: privateJwk.n, e: privateJwk.e };
