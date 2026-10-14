@@ -70,5 +70,5 @@ about it — log out, step up, notify, ignore — is entirely the Receiver's dec
 </div>
 
 <div class="callout">
-<p><strong>Try it.</strong> Run the whole lifecycle against the live <a href="/playground/transmitter/">sample Transmitter</a>: get a token, create a stream, verify it, fire a CAEP event and watch it land at a <a href="/playground/receiver/">sample Receiver</a>.</p>
+<p><strong>Try it.</strong> Run the whole lifecycle live: on the <a href="/playground/receiver/">Receiver page</a> get a token, create a stream and verify it; then fire a CAEP event from the <a href="/playground/transmitter/">Transmitter page</a> and watch it land back at the Receiver.</p>
 </div>

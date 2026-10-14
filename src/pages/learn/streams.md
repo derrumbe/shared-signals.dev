@@ -100,5 +100,5 @@ over the stream, echoing `state`. Seeing that SET arrive confirms discovery, aut
 and validation are all wired correctly — it's the first thing to test with any new partner.
 
 <div class="callout">
-<p><strong>Try it.</strong> The <a href="/playground/transmitter/">sample Transmitter</a> implements this whole API: create a stream, read its configuration and status, pause and re-enable it, and request verification, from the page or with curl.</p>
+<p><strong>Try it.</strong> The sample Transmitter implements this whole API. Drive it as a Receiver from the <a href="/playground/receiver/">Receiver page</a> (create, read, pause, verify, delete) or with curl; pause a stream from the <a href="/playground/transmitter/">Transmitter page</a> to see the Stream Updated event a Transmitter-initiated change sends.</p>
 </div>

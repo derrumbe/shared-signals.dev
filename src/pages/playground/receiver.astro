@@ -1,33 +1,70 @@
 ---
 import Base from '../../layouts/Base.astro';
+import Credentials from '../../components/Credentials.astro';
+import { EVENTS, uri } from '../../data/events';
+const events = EVENTS.filter((e) => e.spec !== 'ssf').map((e) => ({ uri: uri(e), name: e.name, spec: e.spec, deprecated: !!e.deprecated }));
 ---
-<Base title="Sample Receiver" description="A public SSF push endpoint (RFC 8935). Point your Transmitter at it and see every SET decoded and checked against SSF, CAEP and the CAEP Interoperability Profile.">
+<Base title="Sample Receiver" description="Play the SSF Receiver: get a push endpoint (RFC 8935), create and manage streams on the sample Transmitter, and see every SET decoded and checked against SSF, CAEP and the CAEP Interoperability Profile.">
   <p class="eyebrow"><a href="/playground/">Playground</a> · Receiver</p>
   <h1>Sample Receiver</h1>
-  <p class="lede">A push endpoint (RFC 8935) for testing your Transmitter. Every SET that arrives is decoded, its signature checked
-  against your issuer’s keys, and its claims checked against SSF 1.0, CAEP and the Interoperability Profile — with the exact
-  response your Transmitter got.</p>
+  <p class="lede">In SSF the Receiver drives: it creates streams on a Transmitter and says how to deliver them. This page plays that role.
+  Get a push endpoint, connect it to the <a href="/playground/transmitter/">sample Transmitter</a> — or point your own Transmitter at it —
+  and every SET that arrives is decoded and checked against SSF 1.0, CAEP and the Interoperability Profile.</p>
 
   <div class="panel" id="create-panel">
-    <h2>Create a receiver</h2>
-    <p class="muted" style="margin:0;font-size:.9rem">Both fields are optional. Set them and the receiver rejects SETs whose <code>iss</code> or <code>aud</code> don’t match, as a real Receiver must.</p>
+    <h2>1. Your push endpoint</h2>
+    <p class="muted" style="margin:0;font-size:.9rem">Both fields are optional. Set them and the receiver rejects SETs whose <code>iss</code> or <code>aud</code> don’t match, as a real Receiver must.
+    Leave them empty if you’ll only use the sample Transmitter; streams created below set them for you.</p>
     <div class="row">
       <label class="field"><span>Expected issuer (<code>iss</code>)</span><input type="url" id="issuer" placeholder="https://transmitter.example.com" /></label>
       <label class="field"><span>Expected audience (<code>aud</code>)</span><input type="text" id="audience" placeholder="the aud your Transmitter puts in the stream" /></label>
     </div>
     <button class="btn primary" id="create">Create receiver</button>
     <div class="out" id="create-out"></div>
+    <div id="details" hidden style="margin-top:1rem">
+      <p class="muted" style="margin:0 0 .5rem;font-size:.9rem">To use your own Transmitter, create a stream with push delivery to this endpoint and set
+      <code>delivery.authorization_header</code> to the value below. Anyone with this page’s link can see what arrives, so don’t send real user data.
+      Receivers are deleted after 7 days without use.</p>
+      <label class="field"><span><code>delivery.endpoint_url</code></span><span class="copy"><input type="text" id="endpoint" readonly /><button class="btn small" data-copy="endpoint">Copy</button></span></label>
+      <label class="field"><span><code>delivery.authorization_header</code></span><span class="copy"><input type="text" id="authz" readonly /><button class="btn small" data-copy="authz">Copy</button></span></label>
+      <p class="muted" style="font-size:.85rem" id="expect"></p>
+    </div>
   </div>
 
-  <div class="panel" id="details" hidden>
-    <h2>Your receiver</h2>
-    <p class="muted" style="margin:0 0 .5rem;font-size:.9rem">Create a stream on your Transmitter with push delivery to this endpoint, and set
-    <code>delivery.authorization_header</code> to the value below. Anyone with this page’s link can see what arrives, so don’t send real user data.
-    Receivers are deleted after 7 days without use.</p>
-    <label class="field"><span><code>delivery.endpoint_url</code></span><span class="copy"><input type="text" id="endpoint" readonly /><button class="btn small" data-copy="endpoint">Copy</button></span></label>
-    <label class="field"><span><code>delivery.authorization_header</code></span><span class="copy"><input type="text" id="authz" readonly /><button class="btn small" data-copy="authz">Copy</button></span></label>
-    <pre><code id="stream-json"></code></pre>
-    <p class="muted" style="font-size:.85rem" id="expect"></p>
+  <Credentials heading="2. Connect to the sample Transmitter" />
+
+  <div class="panel">
+    <h2>3. Create a stream</h2>
+    <p class="muted" style="margin:0;font-size:.9rem">Calls <code>POST /ssf/stream</code> on the sample Transmitter, as your Receiver would.</p>
+    <div class="radios" role="radiogroup" aria-label="Delivery" style="margin-top:.8rem">
+      <label><input type="radio" name="delivery" value="here" checked /> Push to this Receiver</label>
+      <label><input type="radio" name="delivery" value="push" /> Push to another endpoint</label>
+      <label><input type="radio" name="delivery" value="poll" /> Poll</label>
+    </div>
+    <div id="push-fields" hidden class="row">
+      <label class="field"><span><code>endpoint_url</code></span><input type="url" id="endpoint_url" placeholder="https://receiver.example.com/events" /></label>
+      <label class="field"><span><code>authorization_header</code> <small>(optional)</small></span><input type="text" id="authorization_header" placeholder="Bearer …" /></label>
+    </div>
+    <label class="field"><span><code>description</code></span><input type="text" id="description" placeholder="e.g. Session revocation test" maxlength="256" />
+      <small>Shown in the stream lists on both pages. Left empty, one is made up from the delivery method and time.</small></label>
+    <details>
+      <summary style="cursor:pointer;font-size:.9rem"><code>events_requested</code> — all CAEP and RISC events by default</summary>
+      <div class="radios" style="margin:.6rem 0;font-size:.85rem;display:grid;grid-template-columns:repeat(auto-fill,minmax(15rem,1fr))">
+        {events.map((e) => <label><input type="checkbox" name="events_requested" value={e.uri} checked={!e.deprecated} /> <span class={`tag ${e.spec}`}>{e.spec}</span> {e.name}</label>)}
+      </div>
+    </details>
+    <div class="actions" style="margin:1rem 0 0"><button class="btn primary" id="create-stream">Create stream</button></div>
+    <div class="out" id="stream-out"></div>
+  </div>
+
+  <div class="panel">
+    <div style="display:flex;gap:.7rem;align-items:center;flex-wrap:wrap">
+      <h2 style="margin:0;flex:1">4. Your streams</h2>
+      <button class="btn small" id="list-btn">Refresh</button>
+    </div>
+    <p class="muted" style="margin:.4rem 0 0;font-size:.85rem">Receiver-side management: pausing here is a Receiver request (<code>POST /ssf/status</code>), so the Transmitter sends no Stream Updated event.
+    To fire events, use the <a href="/playground/transmitter/">Transmitter</a>.</p>
+    <div class="out" id="streams"></div>
   </div>
 
   <div class="panel" id="feed-panel" hidden>
@@ -57,31 +94,55 @@ import Base from '../../layouts/Base.astro';
 </Base>
 
 <script>
-  import { api, badge, copyButtons, errorText, esc, pretty, renderChecks, store } from '../../scripts/playground';
+  import { api, badge, copyButtons, decodeJwt, errorText, esc, pretty, randomHex, renderChecks, store } from '../../scripts/playground';
+  import { currentCreds, deliveryCell, initCreds, isPush, loadStreams, statusBadge, streamCell, token, type Stream } from '../../scripts/session';
 
-  const $ = (id: string) => document.getElementById(id)!;
+  const $ = <T extends HTMLElement = HTMLInputElement>(id: string) => document.getElementById(id) as T;
   const remembered = store<string>('ssf.receiver');
   let id = location.hash.slice(1) || remembered.get() || '';
+  let receiver: any = null;
+  let streams: Stream[] = [];
   let timer: number | undefined;
 
+  // ── Push endpoint ──────────────────────────────────────────────────────
   function show(r: any) {
+    receiver = r;
     id = r.receiver_id;
     remembered.set(id);
     if (location.hash.slice(1) !== id) history.replaceState(null, '', `#${id}`);
-    ($('endpoint') as HTMLInputElement).value = r.endpoint_url;
-    ($('authz') as HTMLInputElement).value = r.authorization_header;
-    $('stream-json').textContent = JSON.stringify({ delivery: { method: 'urn:ietf:rfc:8935', endpoint_url: r.endpoint_url, authorization_header: r.authorization_header } }, null, 2);
+    $('endpoint').value = r.endpoint_url;
+    $('authz').value = r.authorization_header;
     $('expect').textContent = `Expected iss: ${r.expected_issuer ?? 'any'} · expected aud: ${r.expected_audience ?? 'any'} · expires ${new Date(r.expires).toLocaleString()} unless used.`;
     $('details').hidden = false;
     $('feed-panel').hidden = false;
+    $('create').textContent = 'Create another receiver';
+  }
+
+  async function createReceiver(issuer: string, audience: string) {
+    const r = await api('POST', '/api/receivers', { body: { issuer, audience } });
+    if (r.status !== 201) { $('create-out').innerHTML = `<p class="error">${esc(errorText(r))}</p>`; return null; }
+    $('create-out').innerHTML = '';
+    show(r.json);
+    renderFeed([]);
+    return r.json;
+  }
+
+  // ── Received SETs ──────────────────────────────────────────────────────
+  function streamName(e: any): string {
+    // Our Transmitter tells the Receiver which stream it delivered on; for SSF events the subject is the stream.
+    const sid = e.stream_id ?? (e.event_type?.includes('/ssf/') ? e.payload?.sub_id?.id : undefined);
+    if (!sid) return '';
+    const s = streams.find((x) => x.stream_id === sid);
+    return s?.description ? esc(s.description) : `stream <code>${esc(sid.slice(0, 8))}…</code>`;
   }
 
   function renderFeed(events: any[]) {
-    if (!events.length) { $('feed').innerHTML = '<p class="muted">Nothing yet. Push a SET to the endpoint above — or use the <a href="/playground/transmitter/">sample Transmitter</a>.</p>'; return; }
+    if (!events.length) { $('feed').innerHTML = '<p class="muted">Nothing yet. Create a stream above and fire an event from the <a href="/playground/transmitter/">Transmitter</a>, or push from your own.</p>'; return; }
     $('feed').innerHTML = events.map((e, i) => {
       const type = e.event_type ? e.event_type.split('/').pop() : 'unreadable SET';
+      const from = streamName(e);
       return `<details${i === 0 ? ' open' : ''}>
-        <summary>${badge(e.verdict)} <code>${esc(type)}</code> <span class="muted">${esc(new Date(e.at).toLocaleTimeString())} · responded ${esc(e.status)}</span></summary>
+        <summary>${badge(e.verdict)} <code>${esc(type)}</code> ${from ? `<span>via ${from}</span>` : ''} <span class="muted">${esc(new Date(e.at).toLocaleTimeString())} · responded ${esc(e.status)}</span></summary>
         ${renderChecks(e.checks)}
         ${e.response ? `<p class="muted" style="font-size:.85rem;margin:.5rem 0 0">Response body</p>${pretty(e.response)}` : ''}
         ${e.header ? `<p class="muted" style="font-size:.85rem;margin:.5rem 0 0">Header</p>${pretty(e.header)}` : ''}
@@ -91,10 +152,10 @@ import Base from '../../layouts/Base.astro';
     }).join('');
   }
 
-  async function load() {
+  async function loadFeed() {
     if (!id) return;
     const r = await api('GET', `/api/receivers/${id}`);
-    if (r.status === 404) { remembered.set(null); id = ''; $('details').hidden = $('feed-panel').hidden = true; $('create-out').innerHTML = `<p class="error">${esc(errorText(r))}</p>`; return; }
+    if (r.status === 404) { remembered.set(null); id = ''; receiver = null; $('details').hidden = $('feed-panel').hidden = true; $('create-out').innerHTML = `<p class="error">${esc(errorText(r))}</p>`; return; }
     if (r.status !== 200) return;
     show(r.json);
     renderFeed(r.json.events);
@@ -102,21 +163,101 @@ import Base from '../../layouts/Base.astro';
 
   function poll() {
     clearInterval(timer);
-    if (($('auto') as HTMLInputElement).checked) timer = setInterval(() => { if (!document.hidden) load(); }, 5000) as unknown as number;
+    if ($('auto').checked) timer = setInterval(() => { if (!document.hidden) loadFeed(); }, 5000) as unknown as number;
   }
 
-  $('create').onclick = async () => {
-    const r = await api('POST', '/api/receivers', { body: { issuer: ($('issuer') as HTMLInputElement).value, audience: ($('audience') as HTMLInputElement).value } });
-    if (r.status !== 201) { $('create-out').innerHTML = `<p class="error">${esc(errorText(r))}</p>`; return; }
-    $('create-out').innerHTML = '';
-    show(r.json);
-    renderFeed([]);
+  // ── Streams ────────────────────────────────────────────────────────────
+  document.querySelectorAll<HTMLInputElement>('input[name=delivery]').forEach((r) => (r.onchange = () => ($('push-fields').hidden = r.value !== 'push' || !r.checked)));
+
+  $('create-stream').onclick = async () => {
+    const out = $('stream-out');
+    const t = await token(); if (!t) { out.innerHTML = '<p class="error">Get an access token in step 2 first.</p>'; return; }
+    const mode = document.querySelector<HTMLInputElement>('input[name=delivery]:checked')!.value;
+    let delivery: Record<string, string>, label: string;
+    if (mode === 'here') {
+      // A stream from the sample Transmitter: make sure this receiver exists and expects its iss and aud.
+      // A receiver set up for some other Transmitter would reject these SETs, so start a fresh one.
+      const fits = receiver && (!receiver.expected_issuer || receiver.expected_issuer === location.origin) && (!receiver.expected_audience || receiver.expected_audience === currentCreds().client_id);
+      const rc = fits ? receiver : await createReceiver(location.origin, currentCreds().client_id);
+      if (!rc) return;
+      delivery = { method: 'urn:ietf:rfc:8935', endpoint_url: rc.endpoint_url, authorization_header: rc.authorization_header };
+      label = 'Push to sample Receiver';
+    } else if (mode === 'push') {
+      delivery = { method: 'urn:ietf:rfc:8935', endpoint_url: $('endpoint_url').value.trim(), ...($('authorization_header').value.trim() ? { authorization_header: $('authorization_header').value.trim() } : {}) };
+      label = `Push to ${(() => { try { return new URL(delivery.endpoint_url).hostname; } catch { return 'endpoint'; } })()}`;
+    } else {
+      delivery = { method: 'urn:ietf:rfc:8936' };
+      label = 'Poll';
+    }
+    const description = $('description').value.trim() || `${label} · ${new Date().toLocaleString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}`;
+    const events_requested = [...document.querySelectorAll<HTMLInputElement>('input[name=events_requested]:checked')].map((i) => i.value);
+    const r = await api('POST', '/ssf/stream', { token: t, body: { delivery, events_requested, description } });
+    if (r.status !== 201) { out.innerHTML = `<p class="error">${r.status}: ${esc(errorText(r))}</p>`; return; }
+    $('description').value = '';
+    out.innerHTML = `<p>Created <strong>${esc(r.json.description)}</strong>. Next: <a href="/playground/transmitter/">fire an event</a> at it, or Verify it below.</p>
+      <details><summary style="cursor:pointer;font-size:.9rem">POST /ssf/stream → 201</summary>${pretty(r.json)}</details>`;
+    await listStreams();
   };
-  $('refresh').onclick = load;
-  $('clear').onclick = async () => { await api('DELETE', `/api/receivers/${id}/events`); load(); };
+
+  async function listStreams() {
+    const el = $('streams');
+    const res = await loadStreams();
+    if (typeof res === 'string') { el.innerHTML = `<p class="muted">${esc(res)}</p>`; return; }
+    streams = res;
+    if (!streams.length) { el.innerHTML = '<p class="muted">No streams yet.</p>'; return; }
+    el.innerHTML = `<div class="table-wrap"><table><thead><tr><th>Stream</th><th>Delivery</th><th>Status</th><th>Actions</th></tr></thead><tbody>${streams.map((s) => `<tr>
+        <td>${streamCell(s)}</td><td>${deliveryCell(s, id)}</td><td>${statusBadge(s.status)}</td>
+        <td><div style="display:flex;flex-wrap:wrap;gap:.3rem">
+          <button class="btn small" data-act="verify" data-id="${esc(s.stream_id)}">Verify</button>
+          ${!isPush(s) ? `<button class="btn small" data-act="poll" data-id="${esc(s.stream_id)}">Poll</button>` : ''}
+          ${['enabled', 'paused', 'disabled'].filter((x) => x !== s.status).map((x) => `<button class="btn small" data-act="status" data-status="${x}" data-id="${esc(s.stream_id)}">${x === 'enabled' ? 'Enable' : x === 'paused' ? 'Pause' : 'Disable'}</button>`).join('')}
+          <button class="btn small" data-act="config" data-id="${esc(s.stream_id)}">Config</button>
+          <button class="btn small" data-act="delete" data-id="${esc(s.stream_id)}">Delete</button>
+        </div></td></tr>`).join('')}</tbody></table></div><div class="out" id="act-out"></div>`;
+    el.querySelectorAll<HTMLButtonElement>('button[data-act]').forEach((b) => (b.onclick = () => act(b.dataset.act!, b.dataset.id!, b.dataset.status)));
+    if (id) loadFeed();
+  }
+
+  async function act(what: string, sid: string, status?: string) {
+    const t = await token(); if (!t) return;
+    const show = (html: string) => { const o = document.getElementById('act-out'); if (o) o.innerHTML = html; };
+    const name = esc(streams.find((s) => s.stream_id === sid)?.description || sid);
+    if (what === 'verify') {
+      const r = await api('POST', '/ssf/verify', { token: t, body: { stream_id: sid, state: randomHex(8) } });
+      show(r.status === 204 ? `<p>Verification requested for <strong>${name}</strong> (204). The Verification event follows asynchronously${isPush(streams.find((s) => s.stream_id === sid)!) ? '' : '; Poll to collect it'}.</p>` : `<p class="error">${r.status}: ${esc(errorText(r))}</p>`);
+      setTimeout(loadFeed, 1500);
+    } else if (what === 'status') {
+      const r = await api('POST', '/ssf/status', { token: t, body: { stream_id: sid, status, reason: 'Requested by the Receiver from the playground' } });
+      await listStreams();
+      show(r.status === 200 ? `<p><strong>${name}</strong> is now <code>${esc(r.json.status)}</code>.</p>` : `<p class="error">${esc(errorText(r))}</p>`);
+    } else if (what === 'poll') {
+      const r = await api('POST', `/ssf/poll/${sid}`, { token: t, body: { maxEvents: 10, returnImmediately: true } });
+      if (r.status !== 200) { show(`<p class="error">${esc(errorText(r))}</p>`); return; }
+      const jtis = Object.keys(r.json.sets);
+      show(`<p>Polled <strong>${name}</strong>: ${jtis.length} SET(s)${r.json.moreAvailable ? ', more available' : ''}. ${jtis.length ? '<button class="btn small" id="ack-btn">Acknowledge them</button>' : ''}</p>
+        ${jtis.map((j) => `<details><summary style="cursor:pointer;font-size:.88rem"><code>${esc(j)}</code> <a href="/playground/inspector/#set=${encodeURIComponent(r.json.sets[j])}" target="_blank">inspect</a></summary>${pretty(decodeJwt(r.json.sets[j]))}</details>`).join('')}`);
+      const ack = document.getElementById('ack-btn');
+      if (ack) ack.onclick = async () => { await api('POST', `/ssf/poll/${sid}`, { token: t, body: { ack: jtis, maxEvents: 0 } }); show(`<p>Acknowledged ${jtis.length} SET(s).</p>`); };
+    } else if (what === 'config') {
+      const r = await api('GET', `/ssf/stream?stream_id=${sid}`, { token: t });
+      show(`<p class="muted" style="font-size:.88rem">GET /ssf/stream?stream_id=… → ${r.status}</p>${pretty(r.json)}`);
+    } else if (what === 'delete') {
+      if (!confirm(`Delete “${streams.find((s) => s.stream_id === sid)?.description || sid}”?`)) return;
+      const r = await api('DELETE', `/ssf/stream?stream_id=${sid}`, { token: t });
+      await listStreams();
+      if (r.status !== 204) show(`<p class="error">${esc(errorText(r))}</p>`);
+    }
+  }
+
+  $('create').onclick = () => createReceiver($('issuer').value, $('audience').value);
+  $('refresh').onclick = loadFeed;
+  $('clear').onclick = async () => { await api('DELETE', `/api/receivers/${id}/events`); loadFeed(); };
   $('auto').onchange = poll;
-  window.addEventListener('hashchange', () => { id = location.hash.slice(1); load(); });
+  $('list-btn').onclick = listStreams;
+  window.addEventListener('hashchange', () => { id = location.hash.slice(1); loadFeed(); });
   copyButtons();
-  load();
+  initCreds(listStreams);
+  loadFeed();
+  listStreams();
   poll();
 </script>

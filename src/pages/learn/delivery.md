@@ -71,5 +71,5 @@ arrive.
 | Back-pressure | Transmitter retries | Receiver controls `maxEvents` |
 
 <div class="callout">
-<p><strong>Try it.</strong> Create a push stream to a <a href="/playground/receiver/">sample Receiver</a> or a poll stream on the <a href="/playground/transmitter/">sample Transmitter</a>, fire an event, and compare: push shows the Receiver’s <code>202</code>; poll lets you fetch and acknowledge SETs yourself.</p>
+<p><strong>Try it.</strong> On the <a href="/playground/receiver/">Receiver page</a>, create one push stream and one poll stream, fire an event at both from the <a href="/playground/transmitter/">Transmitter page</a>, and compare: push shows the Receiver’s <code>202</code>; poll lets you fetch and acknowledge SETs yourself.</p>
 </div>

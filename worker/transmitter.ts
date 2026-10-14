@@ -446,7 +446,7 @@ export class Transmitter extends DurableObject<Env> {
     let status: number, text: string, failure: string | undefined;
     const rid = internalReceiver(d.endpoint_url!, s.config.iss);
     if (rid) {
-      const r: Reply = await this.env.RECEIVER.get(this.env.RECEIVER.idFromName(rid)).receive(headers['content-type'], d.authorization_header ?? null, e.set) as Reply;
+      const r: Reply = await this.env.RECEIVER.get(this.env.RECEIVER.idFromName(rid)).receive(headers['content-type'], d.authorization_header ?? null, e.set, id) as Reply;
       status = r.status; text = r.body ? JSON.stringify(r.body) : '';
     } else {
       const { url, problem } = checkPublicUrl(d.endpoint_url);

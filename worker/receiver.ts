@@ -14,7 +14,7 @@ const PUSH_LIMIT_PER_MINUTE = 60;
 const IDLE_EXPIRY_MS = 7 * 24 * 3600 * 1000;
 
 type Config = { id: string; origin: string; authorization: string; issuer?: string; audience?: string; created: number; lastActivity: number };
-export type Received = { at: number; status: number; response: unknown; verdict: Result['verdict']; checks: Result['checks']; header?: unknown; payload?: unknown; event_type?: string; raw: string };
+export type Received = { at: number; stream_id?: string; status: number; response: unknown; verdict: Result['verdict']; checks: Result['checks']; header?: unknown; payload?: unknown; event_type?: string; raw: string };
 
 export class Receiver extends DurableObject<Env> {
   private window = { minute: 0, count: 0 };
@@ -53,8 +53,12 @@ export class Receiver extends DurableObject<Env> {
     return reply(204);
   }
 
-  /** Handles one RFC 8935 push. Returns the HTTP response the Transmitter gets. */
-  async receive(contentType: string | null, authorization: string | null, body: string): Promise<Reply> {
+  /**
+   * Handles one RFC 8935 push. Returns the HTTP response the Transmitter gets.
+   * viaStream is set only when this site's own Transmitter delivers directly (not over HTTP), so the
+   * playground can show which stream a SET came from; SETs themselves don't carry the stream id.
+   */
+  async receive(contentType: string | null, authorization: string | null, body: string, viaStream?: string): Promise<Reply> {
     const cfg = await this.config();
     if (!cfg) return reply(404, { err: 'invalid_request', description: 'No such receiver at this URL (it may have expired after 7 days without use).' });
 
@@ -79,7 +83,7 @@ export class Receiver extends DurableObject<Env> {
 
     const events = (await this.ctx.storage.get<Received[]>('events')) ?? [];
     events.unshift({
-      at: Date.now(), status: r.status, response: r.body ?? null, verdict: result.verdict, checks: result.checks,
+      at: Date.now(), ...(viaStream ? { stream_id: viaStream } : {}), status: r.status, response: r.body ?? null, verdict: result.verdict, checks: result.checks,
       header: result.header, payload: result.payload, event_type: result.eventType, raw: body.slice(0, 8192),
     });
     await this.ctx.storage.put('events', events.slice(0, MAX_EVENTS));
