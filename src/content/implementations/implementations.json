@@ -239,5 +239,29 @@
     "language": "Go",
     "url": "https://github.com/mike-kiser-sp/receiver",
     "summary": "A Go Shared Signals Receiver supporting push and poll delivery, stream status, and typed CAEP events."
+  },
+  {
+    "id": "easyssf",
+    "name": "easyssf for Java",
+    "vendor": "Open source",
+    "kind": "library",
+    "roles": ["receiver"],
+    "profiles": ["SSF", "CAEP", "RISC", "SCIM Events"],
+    "delivery": ["push", "poll"],
+    "language": "Java",
+    "url": "https://github.com/easyssf/easyssf",
+    "summary": "Building blocks for the OpenID Shared Signals Framework (SSF) for JVM based Apps."
+  },
+  {
+    "id": "easyssf-dotnet",
+    "name": "easyssf for .Net",
+    "vendor": "Open source",
+    "kind": "library",
+    "roles": ["receiver"],
+    "profiles": ["SSF", "CAEP", "RISC", "SCIM Events"],
+    "delivery": ["push", "poll"],
+    "language": "C#",
+    "url": "https://github.com/easyssf/easyssf-dotnet",
+    "summary": "Building blocks for the OpenID Shared Signals Framework (SSF) for .NET: a receiver library with CAEP, RISC and SCIM Events"
   }
 ]
