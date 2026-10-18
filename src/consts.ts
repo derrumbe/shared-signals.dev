@@ -36,7 +36,7 @@ export const SPEC_URLS = {
 
 // The openid/sharedsignals commit this site's content was last checked against.
 // `npm run check-specs` lists anything newer.
-export const SPECS_SYNC = { commit: 'a34d6ff', date: '2026-09-01', checked: '2026-10-14' };
+export const SPECS_SYNC = { commit: 'a34d6ff', date: '2026-09-01', checked: '2026-10-18' };
 
 // OpenID Foundation Shared Signals Working Group. Meeting time from the WG wiki (Meetings page,
 // notes weekly through 2026-10-13); chairs from openid.net/wg/sharedsignals (checked 2026-10-14).
