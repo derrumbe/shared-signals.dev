@@ -73,13 +73,15 @@ export async function authenticate(request: Request, env: Env, issuer: string, n
     return error(400, 'invalid_request', 'Access tokens in the query string are not accepted (RFC 6750 §2.3). Use the Authorization header.', { 'www-authenticate': challenge('invalid_request') });
   const auth = request.headers.get('authorization') ?? '';
   // RFC 6750 §3.1: a request with no Bearer credentials at all gets a bare challenge, with no error
-  // code (so the body carries only a description); a malformed Bearer header is invalid_request (400).
-  if (!/^Bearer(\s|$)/i.test(auth))
+  // code (so the body carries only a description). Any Bearer value we can't accept, malformed or not,
+  // is invalid_token (401), which is what CAEP Interop Profile conformance tests expect.
+  const m = auth.match(/^Bearer\s+(\S.*)$/i);
+  if (!m)
     return reply(401, { error_description: 'Send an access token as "Authorization: Bearer <token>". Get one from /ssf/oauth/token.' }, { 'www-authenticate': challenge() });
-  const m = auth.match(/^Bearer\s+([A-Za-z0-9._~+/-]+=*)$/i);
-  if (!m) return error(400, 'invalid_request', 'The Authorization header is not a well-formed Bearer token (RFC 6750 §2.1).', { 'www-authenticate': challenge('invalid_request', 'malformed Bearer token') });
+  if (!/^[A-Za-z0-9._~+/-]+=*$/.test(m[1].trim()))
+    return error(401, 'invalid_token', 'The access token is malformed.', { 'www-authenticate': challenge('invalid_token', 'malformed token') });
 
-  const claims = await verifyHs256((await getSigner(env)).hmacKey, m[1]);
+  const claims = await verifyHs256((await getSigner(env)).hmacKey, m[1].trim());
   const now = Math.floor(Date.now() / 1000);
   if (!claims || claims.iss !== issuer || claims.aud !== `${issuer}/ssf`) return error(401, 'invalid_token', 'The access token is malformed or was not issued by this server.', { 'www-authenticate': challenge('invalid_token', 'bad token') });
   if (typeof claims.exp !== 'number' || claims.exp <= now) return error(401, 'invalid_token', 'The access token has expired.', { 'www-authenticate': challenge('invalid_token', 'expired') });
