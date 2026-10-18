@@ -9,6 +9,8 @@ export type EventType = {
   summary: string;
   claims: Claim[];
   deprecated?: string;
+  /** Shown under the example: how the CAEP Interoperability Profile differs from it. */
+  iopNote?: string;
   example?: Record<string, unknown>;
 };
 
@@ -39,6 +41,7 @@ export const EVENTS: EventType[] = [
     slug: 'session-revoked', spec: 'caep', name: 'Session Revoked',
     summary: 'A session for the subject has been terminated. Receivers should end any corresponding sessions they hold.',
     claims: caepCommon,
+    iopNote: 'This example, from the CAEP specification, uses an opaque subject. The CAEP Interoperability Profile allows only email and iss_sub subjects on CAEP events (opaque is for the Verification event only), so interoperable Transmitters send one of those.',
     example: set('session-revoked', 'caep', { format: 'opaque', id: 'dMTlD|1600802906337.16|16008.16' }, { event_timestamp: 1760390391 }),
   },
   {
@@ -80,6 +83,7 @@ export const EVENTS: EventType[] = [
       { name: 'previous_status', req: 'REQUIRED', desc: 'compliant or not-compliant.' },
       ...caepCommon,
     ],
+    iopNote: 'This example, from the CAEP specification, uses a complex subject made of opaque identifiers. The CAEP Interoperability Profile allows only email and iss_sub subjects on CAEP events (opaque is for the Verification event only), so interoperable Transmitters send one of those.',
     example: set('device-compliance-change', 'caep', { format: 'complex', device: { format: 'opaque', id: 'device-1234' }, tenant: { format: 'opaque', id: 'tenant-5678' } } as any, { event_timestamp: 1760390391, current_status: 'not-compliant', previous_status: 'compliant', initiating_entity: 'policy' }),
   },
   {

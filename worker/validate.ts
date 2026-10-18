@@ -142,6 +142,11 @@ function checkEvent(type: string, body: any, p: Record<string, any>, add: (id: s
     return;
   }
 
+  // CAEP Interoperability Profile §2.5: CAEP events use email or iss_sub; opaque is for Verification only.
+  if (known?.spec === 'caep' && subject?.format && !['email', 'iss_sub'].includes(subject.format))
+    add('iop-subject', 'warn', `The CAEP Interoperability Profile (§2.5) allows only "email" and "iss_sub" subjects on CAEP events ("opaque" is for the Verification event only); this one is "${subject.format}".`);
+  else if (known?.spec === 'caep' && subject?.format) add('iop-subject', 'pass', `"${subject.format}" is a subject format the CAEP Interoperability Profile allows.`);
+
   if (!known) return;
   const missing = known.claims.filter((c) => c.req === 'REQUIRED' && !c.name.includes('/') && body[c.name] === undefined).map((c) => c.name);
   if (missing.length) add('required-claims', 'fail', `Missing required event claim${missing.length > 1 ? 's' : ''}: ${missing.join(', ')}.`);

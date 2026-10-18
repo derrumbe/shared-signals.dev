@@ -9,7 +9,10 @@ const events = EVENTS.filter((e) => e.spec !== 'ssf').map((e) => {
   const ex = e.example as any;
   const body = ex?.events ? { ...(Object.values(ex.events)[0] as object) } : {};
   delete (body as any).event_timestamp;
-  return { uri: uri(e), name: e.name, spec: e.spec, deprecated: !!e.deprecated, sub_id: ex?.sub_id ?? { format: 'email', email: 'alice@example.com' }, body };
+  // The CAEP Interoperability Profile (§2.5) allows only email and iss_sub subjects (opaque is for
+  // Verification only), so examples using anything else start from an email subject instead.
+  const sub_id = ['email', 'iss_sub'].includes(ex?.sub_id?.format) ? ex.sub_id : { format: 'email', email: 'alice@example.com' };
+  return { uri: uri(e), name: e.name, spec: e.spec, deprecated: !!e.deprecated, sub_id, body };
 });
 ---
 <Base title="Sample Transmitter" description="A live SSF Transmitter built to the CAEP Interoperability Profile. Fire any CAEP or RISC event at your streams and watch it go out.">

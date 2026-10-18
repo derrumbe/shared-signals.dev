@@ -72,8 +72,12 @@ export async function authenticate(request: Request, env: Env, issuer: string, n
   if (url.searchParams.has('access_token'))
     return error(400, 'invalid_request', 'Access tokens in the query string are not accepted (RFC 6750 §2.3). Use the Authorization header.', { 'www-authenticate': challenge('invalid_request') });
   const auth = request.headers.get('authorization') ?? '';
+  // RFC 6750 §3.1: a request with no Bearer credentials at all gets a bare challenge, with no error
+  // code (so the body carries only a description); a malformed Bearer header is invalid_request (400).
+  if (!/^Bearer(\s|$)/i.test(auth))
+    return reply(401, { error_description: 'Send an access token as "Authorization: Bearer <token>". Get one from /ssf/oauth/token.' }, { 'www-authenticate': challenge() });
   const m = auth.match(/^Bearer\s+([A-Za-z0-9._~+/-]+=*)$/i);
-  if (!m) return error(401, 'invalid_request', 'Send an access token as "Authorization: Bearer <token>". Get one from /ssf/oauth/token.', { 'www-authenticate': challenge() });
+  if (!m) return error(400, 'invalid_request', 'The Authorization header is not a well-formed Bearer token (RFC 6750 §2.1).', { 'www-authenticate': challenge('invalid_request', 'malformed Bearer token') });
 
   const claims = await verifyHs256((await getSigner(env)).hmacKey, m[1]);
   const now = Math.floor(Date.now() / 1000);

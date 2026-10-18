@@ -178,7 +178,8 @@ async function signIn(url: URL, env: Env, aid: string, amr: string[], ec: Execut
 /** Sends a CAEP session event about this account to every stream in its saved sandboxes. */
 async function sessionSignal(env: Env, issuer: string, aid: string, sid: string, type: 'session-established' | 'session-revoked', amr: string[] = []) {
   const targets = await account(env, aid).signalTargets();
-  const sub_id = { format: 'complex', user: { format: 'opaque', id: aid }, session: { format: 'opaque', id: sid } };
+  // CAEP Interoperability Profile §2.5: email or iss_sub only (opaque is for Verification events).
+  const sub_id = { format: 'iss_sub', iss: issuer, sub: aid };
   const event = type === 'session-established'
     ? { initiating_entity: 'user', amr, reason_admin: { en: 'Signed in to shared-signals.dev with a passkey' } }
     : { initiating_entity: 'user', reason_admin: { en: 'Signed out of shared-signals.dev' } };

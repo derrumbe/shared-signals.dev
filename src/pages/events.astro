@@ -45,6 +45,7 @@ const groups = [
               </table></div>
             ) : <p class="muted">No event-specific claims.</p>}
             {e.example && <Code code={JSON.stringify(e.example, null, 2)} lang="json" themes={{ light: 'github-light', dark: 'github-dark' }} />}
+            {e.iopNote && <p class="muted" style="font-size:.88rem">{e.iopNote}</p>}
           </div>
         </details>
       ))}

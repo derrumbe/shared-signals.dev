@@ -76,7 +76,9 @@ export class Receiver extends DurableObject<Env> {
     let r: Reply, result: Result;
     if (authorization !== cfg.authorization) {
       result = { verdict: 'fail', checks: [{ id: 'authorization', level: 'fail', message: authorization ? 'The Authorization header does not match this receiver’s. Set delivery.authorization_header to the value shown on the receiver page.' : 'No Authorization header. Set delivery.authorization_header in your stream to the value shown on the receiver page.' }] };
-      r = reply(401, { err: 'authentication_failed', description: 'Missing or wrong Authorization header.' }, { 'www-authenticate': 'Bearer realm="shared-signals.dev receiver"' });
+      // RFC 6750 §3.1: credentials that were sent but are wrong get error="invalid_token"; none at all, a bare challenge.
+      const challenge = authorization ? 'Bearer realm="shared-signals.dev receiver", error="invalid_token"' : 'Bearer realm="shared-signals.dev receiver"';
+      r = reply(401, { err: 'authentication_failed', description: authorization ? 'Wrong Authorization header.' : 'Missing Authorization header.' }, { 'www-authenticate': challenge });
     } else {
       result = await validateSet(body, discoveringResolver(this.env, cfg.origin), { issuer: cfg.issuer, audience: cfg.audience, contentType });
       result.checks.unshift({ id: 'authorization', level: 'pass', message: 'Authorization header matches.' });
