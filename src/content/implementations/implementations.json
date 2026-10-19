@@ -239,5 +239,19 @@
     "language": "Go",
     "url": "https://github.com/mike-kiser-sp/receiver",
     "summary": "A Go Shared Signals Receiver supporting push and poll delivery, stream status, and typed CAEP events."
+  },
+  {
+    "id": "easyssf",
+    "name": "easyssf",
+    "vendor": "Open source",
+    "kind": "library",
+    "roles": ["receiver"],
+    "profiles": ["SSF", "CAEP", "RISC"],
+    "delivery": ["push", "poll"],
+    "language": "Java, .NET",
+    "license": "Apache-2.0",
+    "url": "https://easyssf.org/",
+    "source": "https://github.com/easyssf/easyssf",
+    "summary": "Building blocks for SSF Receivers: SET verification, discovery, push and poll delivery, stream management and replay protection behind a simple event handler. A plain Java library, a Spring Boot starter and the base of the Quarkus extension, plus a .NET port (CAEP, RISC and SCIM events). Tested against the OpenID conformance suite’s SSF and CAEP receiver plans."
   }
 ]
