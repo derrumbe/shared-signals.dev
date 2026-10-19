@@ -13,7 +13,7 @@ const implementations = defineCollection({
     vendor: z.string(),
     kind: z.enum(['product', 'library', 'test-service']),
     roles: z.array(z.enum(['transmitter', 'receiver'])).min(1),
-    profiles: z.array(z.enum(['SSF', 'CAEP', 'RISC'])).min(1),
+    profiles: z.array(z.enum(['SSF', 'CAEP', 'RISC', 'SCIM Events'])).min(1),
     delivery: z.array(z.enum(['push', 'poll'])).optional(),
     language: z.string().optional(),
     license: z.string().optional(),

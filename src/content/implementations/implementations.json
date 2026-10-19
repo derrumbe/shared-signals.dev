@@ -246,7 +246,7 @@
     "vendor": "Open source",
     "kind": "library",
     "roles": ["receiver"],
-    "profiles": ["SSF", "CAEP", "RISC"],
+    "profiles": ["SSF", "CAEP", "RISC", "SCIM Events"],
     "delivery": ["push", "poll"],
     "language": "Java, .NET, Go, Rust",
     "license": "Apache-2.0",
