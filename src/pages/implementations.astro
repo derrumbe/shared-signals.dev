@@ -41,7 +41,7 @@ const cap = (s: string) => s[0].toUpperCase() + s.slice(1);
                   {i.roles.map(cap).join(' + ')}
                   {i.delivery && <><br /><span class="muted">{i.delivery.join(' + ')}</span></>}
                 </td>
-                <td><span class="tags">{i.profiles.map((p) => <span class={`tag ${p === 'SCIM Events' ? 'neutral' : p.toLowerCase()}`}>{p}</span>)}</span></td>
+                <td><span class="tags">{i.profiles.map((p) => <span class={`tag ${p === 'SCIM Events' ? 'scim' : p.toLowerCase()}`}>{p}</span>)}</span></td>
                 <td>
                   <span class="tags">
                     {(i.interop ?? []).map((e) => <a class="tag neutral" href={INTEROP_EVENTS[e].url} title={INTEROP_EVENTS[e].label}>{INTEROP_EVENTS[e].short}</a>)}
