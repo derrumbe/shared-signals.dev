@@ -248,10 +248,10 @@
     "roles": ["receiver"],
     "profiles": ["SSF", "CAEP", "RISC"],
     "delivery": ["push", "poll"],
-    "language": "Java, .NET",
+    "language": "Java, .NET, Go, Rust",
     "license": "Apache-2.0",
     "url": "https://easyssf.org/",
-    "source": "https://github.com/easyssf/easyssf",
-    "summary": "Building blocks for SSF Receivers: SET verification, discovery, push and poll delivery, stream management and replay protection behind a simple event handler. A plain Java library, a Spring Boot starter and the base of the Quarkus extension, plus a .NET port (CAEP, RISC and SCIM events). Tested against the OpenID conformance suite’s SSF and CAEP receiver plans."
+    "source": "https://github.com/easyssf",
+    "summary": "Adds an SSF Receiver to an application: verifies SETs, skips duplicates, and acts on CAEP, RISC and SCIM events by rejecting revoked access tokens and ending sessions, handing everything else to your handlers. Push and poll delivery and stream management. Spring Boot starter, Quarkus extension and plain Java library, with ports for ASP.NET Core, Go (net/http) and Rust (axum, actix-web). Tested against the OpenID conformance suite."
   }
 ]
