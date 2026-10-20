@@ -116,6 +116,15 @@ ok(insp2.json?.verdict === 'fail' && insp2.json.err === 'invalid_issuer', 'inspe
 const acked = await call('POST', `/ssf/poll/${psid}`, { token, body: { ack: jtis, maxEvents: 5 } });
 ok(Object.keys(acked.json.sets).length === 0, 'acked SET is not returned again');
 
+// SCIM events (RFC 9967) go out like any other, with a "scim" subject
+const scimSub = { format: 'scim', uri: '/Users/2b2f880af6674ac284bae9381673d462', externalId: 'jdoe' };
+const scim = await call('POST', '/api/events', { token, body: { stream_id: psid, event_type: 'prov:patch:notice', sub_id: scimSub, event: { attributes: ['emails'] } } });
+ok(scim.status === 200 && scim.json.event_type === 'urn:ietf:params:scim:event:prov:patch:notice' && scim.json.results[0]?.outcome === 'queued', 'fire SCIM event', scim.json);
+const scimPolled = await call('POST', `/ssf/poll/${psid}`, { token: readTok, body: { maxEvents: 5, returnImmediately: true } });
+const scimSet = Object.values(scimPolled.json?.sets ?? {})[0];
+const scimInsp = await call('POST', '/api/inspect', { body: { set: scimSet, audience: 'smoke-test' } });
+ok(scimInsp.json?.verdict === 'pass', 'inspector passes our SCIM SET', scimInsp.json?.checks?.filter((c) => c.level !== 'pass'));
+
 // Delete + revoke
 ok((await call('DELETE', `/ssf/stream?stream_id=${psid}`, { token })).status === 204, 'delete stream');
 ok((await call('GET', `/ssf/stream?stream_id=${psid}`, { token })).status === 404, 'deleted stream is gone');

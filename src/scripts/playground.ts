@@ -67,6 +67,9 @@ export function copyButtons(root: ParentNode = document) {
 // One line per event (badge, event type, stream, outcome, time); click to open the detail, which
 // always comes in the same order: what happened, checks, header, payload, raw SET.
 
+/** Short display name for an event type URI: the last path segment, or for SCIM URNs (RFC 9967) the part after the prefix. */
+export const shortType = (t: string) => t.startsWith('urn:ietf:params:scim:event:') ? t.slice(27) : t.split('/').pop();
+
 export type EventRow = {
   at: number;
   level: 'pass' | 'warn' | 'fail' | 'info';
@@ -91,7 +94,7 @@ const sub = (label: string, html: string) => `<p class="muted" style="font-size:
 export function eventRow(r: EventRow): string {
   const decoded = r.set && (!r.header || !r.payload) ? decodeJwt(r.set) : null;
   const header = r.header ?? decoded?.header, payload = r.payload ?? decoded?.payload;
-  const what = r.eventType ? `<code>${esc(r.eventType.split('/').pop())}</code>` : `<strong>${esc(r.title ?? '')}</strong>`;
+  const what = r.eventType ? `<code>${esc(shortType(r.eventType))}</code>` : `<strong>${esc(r.title ?? '')}</strong>`;
   const body = [
     r.detail ? `<p style="margin:.4rem 0 0;font-size:.9rem;word-break:break-word">${esc(r.detail)}</p>` : '',
     r.response !== undefined ? sub(r.responseLabel ?? 'Response body', r.response === null ? '<p class="muted" style="margin:.2rem 0 0;font-size:.88rem">(empty)</p>' : pretty(r.response)) : '',

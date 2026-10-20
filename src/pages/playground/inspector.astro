@@ -28,7 +28,7 @@ import Base from '../../layouts/Base.astro';
 </Base>
 
 <script>
-  import { api, badge, checksTray, errorText, esc, pretty } from '../../scripts/playground';
+  import { api, badge, checksTray, errorText, esc, pretty, shortType } from '../../scripts/playground';
 
   const $ = <T extends HTMLElement = HTMLInputElement>(id: string) => document.getElementById(id) as T;
 
@@ -45,7 +45,7 @@ import Base from '../../layouts/Base.astro';
     } });
     if (r.status !== 200) { out.innerHTML = `<p class="error">${esc(errorText(r))}</p>`; return; }
     const v = r.json;
-    out.innerHTML = `<h3 style="display:flex;gap:.5rem;align-items:center">${badge(v.verdict)} ${v.eventType ? `<code>${esc(v.eventType.split('/').pop())}</code>` : ''}</h3>
+    out.innerHTML = `<h3 style="display:flex;gap:.5rem;align-items:center">${badge(v.verdict)} ${v.eventType ? `<code>${esc(shortType(v.eventType))}</code>` : ''}</h3>
       ${checksTray(v.checks)}
       ${v.header ? `<h3>Header</h3>${pretty(v.header)}` : ''}
       ${v.payload ? `<h3>Payload</h3>${pretty(v.payload)}` : ''}`;

@@ -6,7 +6,7 @@
 // RS256-signed SETs with exactly one event each.
 
 import { DurableObject } from 'cloudflare:workers';
-import { EVENTS, uri } from '../src/data/events';
+import { EVENTS, SCIM_PREFIX, uri } from '../src/data/events';
 import { getSigner, randomId } from './jose';
 import { error, reply, type Reply } from './http';
 import { checkPublicUrl, safeFetch } from './ssrf';
@@ -17,8 +17,8 @@ export const POLL = 'urn:ietf:rfc:8936';
 const VERIFICATION = 'https://schemas.openid.net/secevent/ssf/event-type/verification';
 const STREAM_UPDATED = 'https://schemas.openid.net/secevent/ssf/event-type/stream-updated';
 
-/** Every CAEP and RISC event type in the catalogue. SSF's own events are always sendable. */
-export const EVENTS_SUPPORTED = EVENTS.filter((e) => e.spec === 'caep' || e.spec === 'risc').map(uri);
+/** Every CAEP, RISC and SCIM (RFC 9967) event type in the catalogue. SSF's own events are always sendable. */
+export const EVENTS_SUPPORTED = EVENTS.filter((e) => e.spec !== 'ssf').map(uri);
 
 const MAX_STREAMS = 10;
 const MAX_QUEUE = 50;
@@ -354,8 +354,8 @@ export class Transmitter extends DurableObject<Env> {
 
   async fire(c: Ctx, body: Record<string, any>): Promise<Reply> {
     const g = await this.guard(c); if (g) return g;
-    const type = EVENTS_SUPPORTED.find((u) => u === body.event_type || u.endsWith(`/${body.event_type}`));
-    if (!type) return error(400, 'invalid_request', 'event_type must be one of the CAEP or RISC event types in events_supported.');
+    const type = EVENTS_SUPPORTED.find((u) => u === body.event_type || u.endsWith(`/${body.event_type}`) || u === SCIM_PREFIX + body.event_type);
+    if (!type) return error(400, 'invalid_request', 'event_type must be one of the CAEP, RISC or SCIM event types in events_supported.');
     const p = subjectProblem(body.sub_id); if (p) return error(400, 'invalid_request', `sub_id: ${p.replace('subject ', '')}.`);
     const event = body.event ?? {};
     if (!event || typeof event !== 'object' || Array.isArray(event)) return error(400, 'invalid_request', 'event must be a JSON object holding the event’s claims.');

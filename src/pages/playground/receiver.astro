@@ -3,7 +3,7 @@ import Base from '../../layouts/Base.astro';
 import Credentials from '../../components/Credentials.astro';
 import Account from '../../components/Account.astro';
 import { EVENTS, uri } from '../../data/events';
-const events = EVENTS.filter((e) => e.spec === 'caep' || e.spec === 'risc').map((e) => ({ uri: uri(e), name: e.name, spec: e.spec, deprecated: !!e.deprecated }));
+const events = EVENTS.filter((e) => e.spec !== 'ssf').map((e) => ({ uri: uri(e), name: e.name, spec: e.spec, deprecated: !!e.deprecated }));
 ---
 <Base title="Sample Receiver" description="Play the SSF Receiver: get a push endpoint (RFC 8935), create and manage streams on the sample Transmitter, and see every SET decoded and checked against SSF, CAEP and the CAEP Interoperability Profile.">
   <p class="eyebrow"><a href="/playground/">Playground</a> · Receiver</p>
@@ -52,7 +52,7 @@ const events = EVENTS.filter((e) => e.spec === 'caep' || e.spec === 'risc').map(
     <label class="field"><span><code>description</code></span><input type="text" id="description" placeholder="e.g. Session revocation test" maxlength="256" />
       <small>Shown in the stream lists on both pages. Left empty, one is made up from the delivery method and time.</small></label>
     <details>
-      <summary style="cursor:pointer;font-size:.9rem"><code>events_requested</code> — all CAEP and RISC events by default</summary>
+      <summary style="cursor:pointer;font-size:.9rem"><code>events_requested</code> — all CAEP, RISC and SCIM events by default</summary>
       <div class="radios" style="margin:.6rem 0;font-size:.85rem;display:grid;grid-template-columns:repeat(auto-fill,minmax(15rem,1fr))">
         {events.map((e) => <label><input type="checkbox" name="events_requested" value={e.uri} checked={!e.deprecated} /> <span class={`tag ${e.spec}`}>{e.spec}</span> {e.name}</label>)}
       </div>
