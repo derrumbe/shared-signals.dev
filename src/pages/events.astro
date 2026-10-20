@@ -9,13 +9,14 @@ const groups = [
   { id: 'caep', title: 'CAEP events', spec: SPEC_URLS.caep, blurb: 'Session and access-condition changes while a user is signed in.' },
   { id: 'risc', title: 'RISC events', spec: SPEC_URLS.risc, blurb: 'Account-level changes: compromise, lifecycle, recovery.' },
   { id: 'ssf', title: 'SSF stream events', spec: SPEC_URLS.ssf, blurb: 'Housekeeping events about the stream itself, defined by the framework.' },
+  { id: 'scim', title: 'SCIM events', spec: SPEC_URLS.scimEvents, blurb: 'Provisioning changes from a SCIM service provider, defined by IETF RFC 9967. The subject is a sub_id with format "scim" and the resource’s uri; a SET may carry several events from the same transaction, tied together by txn. Provisioning events come in a :full variant carrying the data and a :notice variant listing only the changed attributes.' },
 ] as const;
 ---
-<Base title="Event types" description="Every CAEP, RISC and SSF event type: URI, claims, and an example Security Event Token payload.">
+<Base title="Event types" description="Every CAEP, RISC, SSF and SCIM event type: URI, claims, and an example Security Event Token payload.">
   <p class="eyebrow">Reference</p>
   <h1>Event types</h1>
-  <p class="lede">Every event type defined by the OpenID Shared Signals specifications, with its claims and an example SET payload.
-  Summaries are ours; the linked specs are normative.</p>
+  <p class="lede">Every event type defined by the OpenID Shared Signals specifications, plus the SCIM provisioning events of
+  IETF RFC 9967, with their claims and an example SET payload. Summaries are ours; the linked specs are normative.</p>
 
   <nav class="tags" style="margin-bottom:1rem">
     {groups.map((g) => <a href={`#${g.id}`} class={`tag ${g.id}`} style="text-decoration:none">{g.title}</a>)}
@@ -26,7 +27,7 @@ const groups = [
       <h2>{g.title}</h2>
       <p class="muted">{g.blurb} <a href={g.spec}>Specification →</a></p>
       {EVENTS.filter((e) => e.spec === g.id).map((e) => (
-        <details id={`${e.spec}-${e.slug}`} class="card event" style="margin:.6rem 0">
+        <details id={`${e.spec}-${e.slug.replaceAll(':', '-')}`} class="card event" style="margin:.6rem 0">
           <summary>
             <span class={`tag ${e.spec}`}>{e.spec}</span>
             <strong>{e.name}</strong>

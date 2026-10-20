@@ -5,7 +5,7 @@ import Account from '../../components/Account.astro';
 import { EVENTS, uri } from '../../data/events';
 
 // Event picker data: every CAEP and RISC type, with the catalogue's example claims as a starting point.
-const events = EVENTS.filter((e) => e.spec !== 'ssf').map((e) => {
+const events = EVENTS.filter((e) => e.spec === 'caep' || e.spec === 'risc').map((e) => {
   const ex = e.example as any;
   const body = ex?.events ? { ...(Object.values(ex.events)[0] as object) } : {};
   delete (body as any).event_timestamp;

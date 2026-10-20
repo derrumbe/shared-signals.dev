@@ -1,10 +1,11 @@
 // Event catalogue, transcribed from the OpenID CAEP 1.0, RISC 1.0 and SSF 1.0 final
-// specifications. Keep summaries in our own words and link to the spec for normative text.
+// specifications and IETF RFC 9967 (SCIM Events). Keep summaries in our own words and link to the
+// spec for normative text.
 
 export type Claim = { name: string; req: 'REQUIRED' | 'RECOMMENDED' | 'OPTIONAL'; desc: string };
 export type EventType = {
   slug: string;
-  spec: 'caep' | 'risc' | 'ssf';
+  spec: 'caep' | 'risc' | 'ssf' | 'scim';
   name: string;
   summary: string;
   claims: Claim[];
@@ -14,7 +15,9 @@ export type EventType = {
   example?: Record<string, unknown>;
 };
 
-export const uri = (e: EventType) => `https://schemas.openid.net/secevent/${e.spec}/event-type/${e.slug}`;
+// SCIM event types are URNs registered by RFC 9967; their slugs are the part after the prefix ("prov:create:full").
+export const SCIM_PREFIX = 'urn:ietf:params:scim:event:';
+export const uri = (e: EventType) => e.spec === 'scim' ? SCIM_PREFIX + e.slug : `https://schemas.openid.net/secevent/${e.spec}/event-type/${e.slug}`;
 
 const ts = { name: 'event_timestamp', req: 'OPTIONAL', desc: 'When the event occurred (NumericDate). Optional on every CAEP event.' } as const;
 const caepCommon: Claim[] = [
@@ -34,6 +37,24 @@ const set = (slug: string, spec: string, sub: Record<string, unknown>, body: Rec
 });
 const email = { format: 'email', email: 'alice@example.com' };
 const iss_sub = { format: 'iss_sub', iss: 'https://idp.example.com/', sub: '248289761001' };
+
+// SCIM events (RFC 9967): a SCIM service provider tells receivers about provisioning changes. The
+// examples follow the RFC's figures.
+const scimSet = (slug: string, sub: Record<string, unknown>, body: Record<string, unknown>, extra: Record<string, unknown> = {}) => ({
+  iss: 'https://scim.example.com',
+  jti: '6164f3bbf6ff41a88dc94f18cb0620e8',
+  iat: 1760390400,
+  aud: ['https://scim.example.com/Feeds/98d52461fa5bbc879593b7754'],
+  txn: 'b7b953f11cc6489bbfb87834747cc4c1',
+  ...extra,
+  sub_id: sub,
+  events: { [`urn:ietf:params:scim:event:${slug}`]: body },
+});
+const scimUser = { format: 'scim', uri: '/Users/2b2f880af6674ac284bae9381673d462', externalId: 'jdoe' };
+const scimGroup = { format: 'scim', uri: '/Groups/176f397ec4c44b94b2cfcb759780b8c2', externalId: 'crmUsers' };
+const version = { name: 'version', req: 'OPTIONAL', desc: 'The resource’s ETag version after the change.' } as const;
+const full = (what: string): Claim[] => [{ name: 'data', req: 'REQUIRED', desc: `${what} Present only in the :full variant.` }, version];
+const notice = (what: string): Claim[] => [{ name: 'attributes', req: 'REQUIRED', desc: `${what} Present only in the :notice variant; the receiver can GET the resource for the values.` }, version];
 
 export const EVENTS: EventType[] = [
   // ── CAEP ─────────────────────────────────────────────────────────────
@@ -156,4 +177,42 @@ export const EVENTS: EventType[] = [
     ],
     example: { iss: 'https://tr.example.com/', jti: '123456', iat: 1760390400, aud: 'https://rp.example.com/', sub_id: { format: 'opaque', id: 'f67e39a0a4d34d56b3aa1bc4cff0069f' },
       events: { 'https://schemas.openid.net/secevent/ssf/event-type/stream-updated': { status: 'paused', reason: 'License is not valid' } } } },
+
+  // ── SCIM (RFC 9967) ──────────────────────────────────────────────────
+  { slug: 'feed:add', spec: 'scim', name: 'Added to Feed', summary: 'The resource joined the event feed — for example a user gained a role that brings them into scope. It does not mean the resource is new.', claims: [],
+    example: scimSet('feed:add', scimUser, {}) },
+  { slug: 'feed:remove', spec: 'scim', name: 'Removed from Feed', summary: 'The resource left the event feed. It does not mean the resource was deleted or deactivated.', claims: [],
+    example: scimSet('feed:remove', scimUser, {}) },
+  { slug: 'prov:create:full', spec: 'scim', name: 'Resource Created (full)', summary: 'The service provider created a resource and added it to the feed; carries the resource as created, including its assigned id, so replicas can share it.',
+    claims: full('The resource as created, in the form of a SCIM Bulk operation’s data.'),
+    example: scimSet('prov:create:full', { format: 'scim', uri: '/Users/44f6142df96bd6ab61e7521d9', externalId: 'jdoe' }, { data: { schemas: ['urn:ietf:params:scim:schemas:core:2.0:User'], emails: [{ type: 'work', value: 'jdoe@example.com' }], userName: 'jdoe', name: { givenName: 'John', familyName: 'Doe' } } }) },
+  { slug: 'prov:create:notice', spec: 'scim', name: 'Resource Created (notice)', summary: 'The service provider created a resource; lists which attributes were set, without their values.',
+    claims: notice('The attributes that were set, e.g. ["id","userName","emails"].'),
+    example: scimSet('prov:create:notice', { format: 'scim', uri: '/Users/44f6142df96bd6ab61e7521d9', externalId: 'jdoe' }, { attributes: ['id', 'name', 'userName', 'password', 'emails'] }) },
+  { slug: 'prov:patch:full', spec: 'scim', name: 'Resource Patched (full)', summary: 'The resource was changed with SCIM PATCH; carries the PATCH operations.',
+    claims: full('The SCIM PatchOp request that was applied.'),
+    example: scimSet('prov:patch:full', scimGroup, { version: 'a330bc54f0671c9', data: { schemas: ['urn:ietf:params:scim:api:messages:2.0:PatchOp'], Operations: [{ op: 'add', path: 'members', value: [{ display: 'Babs Jensen', $ref: '/Users/2819c223-7f76-453a-919d-413861904646', value: '2819c223-7f76-453a-919d-413861904646' }] }] } }) },
+  { slug: 'prov:patch:notice', spec: 'scim', name: 'Resource Patched (notice)', summary: 'The resource was changed with SCIM PATCH; lists the modified attributes.',
+    claims: notice('The modified attributes, as SCIM paths (e.g. "members", "name.familyName").'),
+    example: scimSet('prov:patch:notice', scimGroup, { attributes: ['members'], version: 'a330bc54f0671c9' }) },
+  { slug: 'prov:put:full', spec: 'scim', name: 'Resource Replaced (full)', summary: 'The resource was replaced with SCIM PUT; carries the PUT request body.',
+    claims: full('The SCIM PUT request body.'),
+    example: scimSet('prov:put:full', { format: 'scim', uri: '/Users/2819c223-7f76-453a-919d-413861904646' }, { version: 'a330bc54f0671c9', data: { schemas: ['urn:ietf:params:scim:schemas:core:2.0:User'], userName: 'jdoe', externalId: 'jdoe', name: { formatted: 'Mr. Jon Jack Doe III', familyName: 'Doe', givenName: 'Jon', middleName: 'Jack' }, roles: [], emails: [{ value: 'jdoe@example.com' }, { value: 'anon@jdoe.org' }] } }) },
+  { slug: 'prov:put:notice', spec: 'scim', name: 'Resource Replaced (notice)', summary: 'The resource was replaced with SCIM PUT; lists the modified attributes.',
+    claims: notice('The modified attributes.'),
+    example: scimSet('prov:put:notice', { format: 'scim', uri: '/Users/2819c223-7f76-453a-919d-413861904646' }, { version: 'a330bc54f0671c9', attributes: ['userName', 'externalId', 'name', 'roles', 'emails'] }) },
+  { slug: 'prov:delete', spec: 'scim', name: 'Resource Deleted', summary: 'The resource was deleted and is gone from the feed (no separate feed:remove is sent). Has no :full or :notice variant.', claims: [],
+    example: scimSet('prov:delete', scimUser, {}) },
+  { slug: 'prov:activate', spec: 'scim', name: 'Resource Activated', summary: 'The resource (e.g. a user’s account) is ready for use, as agreed between publisher and receiver — for example, it can now sign in.', claims: [],
+    example: scimSet('prov:activate', scimUser, {}) },
+  { slug: 'prov:deactivate', spec: 'scim', name: 'Resource Deactivated', summary: 'The resource was deactivated and disabled. Typically the subject should no longer have an active session; the exact meaning is agreed between publisher and receiver.', claims: [],
+    example: scimSet('prov:deactivate', scimUser, {}) },
+  { slug: 'misc:asyncresp', spec: 'scim', name: 'Asynchronous Request Completion', summary: 'An asynchronous SCIM request finished. The payload is the request’s SCIM Bulk response operation, and txn matches the value returned to the client when it made the request.', claims: [
+      { name: 'method', req: 'REQUIRED', desc: 'The HTTP method of the request (POST, PUT, PATCH, DELETE).' },
+      { name: 'status', req: 'REQUIRED', desc: 'The HTTP status of the result, e.g. "200" or "400".' },
+      { name: 'response', req: 'OPTIONAL', desc: 'A SCIM error response; required when status is not 2xx.' },
+      { name: 'bulkId', req: 'OPTIONAL', desc: 'The client’s bulkId, for operations from a Bulk request.' },
+      version,
+    ],
+    example: scimSet('misc:asyncresp', { format: 'scim', uri: '/Users/2819c223-7f76-453a-919d-413861904646' }, { method: 'PUT', version: 'W/"huJj29dMNgu3WXPD"', status: '200' }, { txn: '734f0614e3274f288f93ac74119dcf78' }) },
 ];

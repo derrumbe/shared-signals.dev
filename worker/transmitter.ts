@@ -18,7 +18,7 @@ const VERIFICATION = 'https://schemas.openid.net/secevent/ssf/event-type/verific
 const STREAM_UPDATED = 'https://schemas.openid.net/secevent/ssf/event-type/stream-updated';
 
 /** Every CAEP and RISC event type in the catalogue. SSF's own events are always sendable. */
-export const EVENTS_SUPPORTED = EVENTS.filter((e) => e.spec !== 'ssf').map(uri);
+export const EVENTS_SUPPORTED = EVENTS.filter((e) => e.spec === 'caep' || e.spec === 'risc').map(uri);
 
 const MAX_STREAMS = 10;
 const MAX_QUEUE = 50;

@@ -1,7 +1,7 @@
 // Checks a Security Event Token against RFC 8417, SSF 1.0 and the CAEP Interoperability Profile.
 // Used by the sample Receiver (on every push) and by the SET inspector.
 
-import { EVENTS, uri, type EventType } from '../src/data/events';
+import { EVENTS, SCIM_PREFIX, uri, type EventType } from '../src/data/events';
 import { decodeJws, type Decoded, type Jwk, verifyRs256 } from './jose';
 
 export type Level = 'pass' | 'warn' | 'fail';
@@ -24,7 +24,7 @@ export type Expect = { issuer?: string; audience?: string; contentType?: string 
 const byUri = new Map<string, EventType>(EVENTS.map((e) => [uri(e), e]));
 const SSF_VERIFICATION = 'https://schemas.openid.net/secevent/ssf/event-type/verification';
 const SSF_STREAM_UPDATED = 'https://schemas.openid.net/secevent/ssf/event-type/stream-updated';
-const SUBJECT_FORMATS = ['account', 'email', 'iss_sub', 'opaque', 'phone_number', 'did', 'uri', 'aliases', 'complex', 'jwt_id', 'saml_assertion_id', 'ip-addresses'];
+const SUBJECT_FORMATS = ['account', 'email', 'iss_sub', 'opaque', 'phone_number', 'did', 'uri', 'aliases', 'complex', 'jwt_id', 'saml_assertion_id', 'ip-addresses', 'scim'];
 
 export async function validateSet(token: string, resolveKey: KeyResolver, expect: Expect = {}): Promise<Result> {
   const checks: Check[] = [];
@@ -98,6 +98,7 @@ export async function validateSet(token: string, resolveKey: KeyResolver, expect
   } else {
     const types = Object.keys(events);
     if (types.length === 1) add('events', 'pass', 'Exactly one event in the events claim.');
+    else if (types.length > 1 && types.every((t) => t.startsWith(SCIM_PREFIX))) add('events', 'pass', `${types.length} SCIM events from the same transaction, which RFC 9967 §2.1 allows.`);
     else add('events', 'fail', `The CAEP Interoperability Profile requires exactly one event per SET; found ${types.length}.`);
     eventType = types[0];
     if (eventType) checkEvent(eventType, events[eventType], p, add);
@@ -134,6 +135,13 @@ function checkEvent(type: string, body: any, p: Record<string, any>, add: (id: s
     if (!subject || typeof subject !== 'object' || typeof subject.format !== 'string') add('subject-format', 'fail', 'The subject must be an object with a "format" member.');
     else if (!SUBJECT_FORMATS.includes(subject.format)) add('subject-format', 'warn', `Unrecognised subject format "${subject.format}".`);
     else add('subject-format', 'pass', `Subject format is "${subject.format}".`);
+  }
+
+  // RFC 9967 §2.1: SCIM events name their subject with a "scim" sub_id holding the resource's uri.
+  if (type.startsWith(SCIM_PREFIX)) {
+    if (subject?.format !== 'scim' || typeof subject?.uri !== 'string') add('scim-subject', 'fail', 'SCIM events (RFC 9967 §2.1) need a sub_id with format "scim" and the resource’s relative uri, e.g. "/Users/2b2f…".');
+    else add('scim-subject', 'pass', `SCIM subject ${subject.uri}.`);
+    if ('data' in body && 'attributes' in body) add('scim-payload', 'fail', 'A SCIM event carries "data" (:full) or "attributes" (:notice), never both (RFC 9967 §2.4).');
   }
 
   if (type === SSF_VERIFICATION || type === SSF_STREAM_UPDATED) {

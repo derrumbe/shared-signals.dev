@@ -27,6 +27,7 @@ export const SPEC_URLS = {
   ssf: 'https://openid.net/specs/openid-sharedsignals-framework-1_0-final.html',
   caep: 'https://openid.net/specs/openid-caep-1_0-final.html',
   risc: 'https://openid.net/specs/openid-risc-1_0-final.html',
+  scimEvents: 'https://www.rfc-editor.org/rfc/rfc9967',
   caepInterop: 'https://openid.net/specs/openid-caep-interoperability-profile-1_0-01.html',
   caepInteropEditors: 'https://openid.github.io/sharedsignals/openid-caep-interoperability-profile-1_0.html',
   editors: 'https://openid.github.io/sharedsignals/',

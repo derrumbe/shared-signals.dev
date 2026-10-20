@@ -3,7 +3,7 @@ import Base from '../../layouts/Base.astro';
 import Credentials from '../../components/Credentials.astro';
 import Account from '../../components/Account.astro';
 import { EVENTS, uri } from '../../data/events';
-const events = EVENTS.filter((e) => e.spec !== 'ssf').map((e) => ({ uri: uri(e), name: e.name, spec: e.spec, deprecated: !!e.deprecated }));
+const events = EVENTS.filter((e) => e.spec === 'caep' || e.spec === 'risc').map((e) => ({ uri: uri(e), name: e.name, spec: e.spec, deprecated: !!e.deprecated }));
 ---
 <Base title="Sample Receiver" description="Play the SSF Receiver: get a push endpoint (RFC 8935), create and manage streams on the sample Transmitter, and see every SET decoded and checked against SSF, CAEP and the CAEP Interoperability Profile.">
   <p class="eyebrow"><a href="/playground/">Playground</a> · Receiver</p>
