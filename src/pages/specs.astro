@@ -7,14 +7,16 @@ const rfcs = [
   ['RFC 8936', 'Poll-Based SET Delivery Using HTTP', 'Receiver polls the Transmitter and acknowledges SETs.', 'https://www.rfc-editor.org/rfc/rfc8936'],
   ['RFC 9493', 'Subject Identifiers for Security Event Tokens', 'The email / iss_sub / opaque / … subject formats.', 'https://www.rfc-editor.org/rfc/rfc9493'],
   ['RFC 7519', 'JSON Web Token (JWT)', 'The token format underneath SETs.', 'https://www.rfc-editor.org/rfc/rfc7519'],
+  ['RFC 9967', 'SCIM Profile for Security Event Tokens', 'SCIM provisioning events carried as SETs; see SCIM events above.', SPEC_URLS.scimEvents],
   ['RFC 6749', 'OAuth 2.0', 'The usual way Receivers authorise to the stream management API.', 'https://www.rfc-editor.org/rfc/rfc6749'],
 ];
 ---
-<Base title="Specifications" description="The OpenID Shared Signals Framework, CAEP and RISC specifications, the CAEP Interoperability Profile, and the IETF RFCs they build on.">
+<Base title="Specifications" description="The OpenID Shared Signals Framework, CAEP and RISC specifications, the CAEP Interoperability Profile, SCIM events (RFC 9967), and the IETF RFCs they build on.">
   <p class="eyebrow">Specifications</p>
   <h1>The specifications</h1>
-  <p class="lede">Three OpenID Foundation final specifications, one interoperability profile, and the IETF RFCs underneath them.
-  All are developed in the open by the <a href={SPEC_URLS.wg}>Shared Signals Working Group</a>.</p>
+  <p class="lede">Three OpenID Foundation final specifications, one interoperability profile, and the IETF RFCs underneath them,
+  developed in the open by the <a href={SPEC_URLS.wg}>Shared Signals Working Group</a> — plus SCIM events, the IETF’s
+  provisioning events that travel the same way.</p>
 
   <section id="ssf" class="prose">
     <h2><span class="tag ssf">Final</span> Shared Signals Framework 1.0</h2>
@@ -53,6 +55,20 @@ const rfcs = [
     <a href={SPEC_URLS.caepInteropEditors}>Working copy</a></p>
   </section>
 
+  <section id="scim" class="prose">
+    <h2><span class="tag scim">RFC</span> SCIM Events (RFC 9967)</h2>
+    <p>The <a href="https://datatracker.ietf.org/wg/scim/about/">IETF SCIM working group</a>’s profile for sending provisioning
+    changes as Security Event Tokens, published in May 2026. A SCIM service provider tells receivers that a user or group was
+    created, patched, replaced, deleted, activated or deactivated, or that a resource joined or left an event feed. Provisioning
+    events come in a <code>:full</code> variant carrying the data and a <code>:notice</code> variant listing only the changed
+    attributes. It also defines asynchronous SCIM requests, whose completion arrives as an event. Subjects use a new
+    <code>sub_id</code> format, <code>scim</code>, holding the resource’s <code>uri</code>, and event types are URNs under
+    <code>urn:ietf:params:scim:event:</code>. Delivery uses the same push and poll RFCs as SSF, so SSF Transmitters and Receivers
+    can carry SCIM events alongside CAEP and RISC. It updates RFC 7643 and RFC 7644.</p>
+    <p><a href={SPEC_URLS.scimEvents}>Read RFC 9967 →</a> · <a href="/events/#scim">SCIM event types</a> ·
+    <a href="/playground/transmitter/">Send one from the playground</a></p>
+  </section>
+
   <h2 id="status">Status at a glance</h2>
   <div class="table-wrap">
     <table>
@@ -61,6 +77,7 @@ const rfcs = [
         <tr><td>Shared Signals Framework 1.0</td><td>Final</td><td>2025-08-29 — no changes since</td></tr>
         <tr><td>CAEP 1.0</td><td>Final</td><td>2025-08-29 — no changes since</td></tr>
         <tr><td>RISC 1.0</td><td>Final</td><td>2025-08-29 — no changes since</td></tr>
+        <tr><td>SCIM Events (RFC 9967)</td><td>IETF Standards Track RFC</td><td>May 2026</td></tr>
         <tr><td>CAEP Interoperability Profile 1.0</td><td>Proposed Final — being revised; public review to restart</td><td>Draft 01 July 2026; working copy adds Risk Level Change (2026-09-01)</td></tr>
       </tbody>
     </table>
