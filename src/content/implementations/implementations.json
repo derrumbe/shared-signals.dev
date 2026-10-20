@@ -27,7 +27,7 @@
   },
   {
     "id": "sailpoint",
-    "name": "Identity Security Cloud",
+    "name": "SailPoint Human Fabric and SailPoint Agentic Fabric",
     "vendor": "SailPoint",
     "kind": "product",
     "roles": ["transmitter", "receiver"],
