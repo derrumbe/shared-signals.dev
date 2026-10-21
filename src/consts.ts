@@ -1,7 +1,7 @@
 export const SITE = {
   title: 'shared-signals.dev',
   description:
-    'A developer guide to the OpenID Shared Signals Framework (SSF), CAEP and RISC: how the standards work, who implements them, and tools to try them.',
+    'A developer guide to the OpenID Shared Signals Framework (SSF), CAEP, RISC and SCIM Events: how the standards work, who implements them, and tools to try them.',
 };
 
 export const NAV = [
