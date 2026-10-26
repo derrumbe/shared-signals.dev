@@ -3,6 +3,7 @@
  *
  *   GET  /.well-known/ssf-configuration         Transmitter Configuration Metadata (SSF §7)
  *   GET  /.well-known/oauth-authorization-server RFC 8414 metadata for the sandbox token endpoint
+ *   GET  /.well-known/oauth-protected-resource/ssf RFC 9728 metadata for the /ssf API (the tokens' audience)
  *   GET  /jwks.json                              Transmitter signing key(s)
  *   POST /ssf/oauth/token                        Client credentials grant → ssf.read / ssf.manage token
  *   POST /ssf/oauth/revoke                       RFC 7009 revocation
@@ -17,7 +18,7 @@
  */
 
 import { accountRoute } from './account';
-import { authenticate, isCaller, revokeEndpoint, SCOPES, tokenEndpoint } from './auth';
+import { authenticate, isCaller, resourceFor, resourceMetadataUrl, revokeEndpoint, SCOPES, tokenEndpoint } from './auth';
 import { error, readJson, readText, reply, toResponse, type Reply } from './http';
 import { getSigner, randomId } from './jose';
 import { discoveringResolver, fixedResolver } from './keysource';
@@ -43,6 +44,10 @@ export default {
 
     if (pathname === '/.well-known/ssf-configuration') return toResponse(reply(200, await metadata(issuer)), { ...PUBLIC, 'cache-control': 'public, max-age=300' });
     if (pathname === '/.well-known/oauth-authorization-server') return toResponse(reply(200, asMetadata(issuer)), { ...PUBLIC, 'cache-control': 'public, max-age=300' });
+    if (pathname === '/.well-known/oauth-protected-resource/ssf') return toResponse(reply(200, prMetadata(issuer)), { ...PUBLIC, 'cache-control': 'public, max-age=300' });
+    // RFC 9728 §3.1 puts a resource's metadata after the well-known prefix; the bare URL would describe the
+    // site root, which is not an OAuth-protected resource. Point clients at the right one.
+    if (pathname === '/.well-known/oauth-protected-resource') return toResponse(error(404, 'not_found', `The protected resource here is ${resourceFor(issuer)}; its metadata is at ${resourceMetadataUrl(issuer)}.`), PUBLIC);
     if (pathname === '/jwks.json') return toResponse(reply(200, { keys: [(await getSigner(env)).publicJwk] }), { ...PUBLIC, 'cache-control': 'public, max-age=300' });
     if (!pathname.startsWith('/ssf/') && !pathname.startsWith('/api/')) {
       if (pathname.startsWith('/.well-known/ssf-configuration/')) return toResponse(error(404, 'not_found', `This site has one issuer, ${issuer}, with no path component.`));
@@ -87,6 +92,16 @@ const asMetadata = (issuer: string) => ({
   token_endpoint_auth_methods_supported: ['client_secret_basic', 'client_secret_post'],
   scopes_supported: [...SCOPES],
   service_documentation: `${issuer}/playground/`,
+});
+
+// RFC 9728: tells a client holding nothing but the API's URL which authorization server issues its tokens.
+const prMetadata = (issuer: string) => ({
+  resource: resourceFor(issuer),
+  authorization_servers: [issuer],
+  scopes_supported: [...SCOPES],
+  bearer_methods_supported: ['header'],
+  resource_name: 'shared-signals.dev sample SSF Transmitter',
+  resource_documentation: `${issuer}/playground/transmitter/`,
 });
 
 const allow = (...methods: string[]) => error(405, 'invalid_request', `Use ${methods.join(' or ')}.`, { allow: methods.join(', ') });

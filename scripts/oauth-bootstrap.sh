@@ -20,9 +20,21 @@ echo "$SSF" | jq '{issuer, configuration_endpoint, verification_endpoint, delive
 ISSUER=$(echo "$SSF" | jq -r .issuer)
 STREAM_EP=$(echo "$SSF" | jq -r .configuration_endpoint)
 
-step "2. Discover its OAuth authorization server (RFC 8414, same issuer)"
-show "curl $ISSUER/.well-known/oauth-authorization-server"
-AS=$(curl -sf "$ISSUER/.well-known/oauth-authorization-server")
+step "2a. Call the stream API with no token: the 401 says where its metadata is (RFC 9728 §5.1)"
+show "curl -i $STREAM_EP"
+CHALLENGE=$(curl -s -o /dev/null -D - "$STREAM_EP" | tr -d '\r' | grep -i '^www-authenticate:' | cut -d' ' -f2-)
+echo "WWW-Authenticate: $CHALLENGE"
+PRM_URL=$(echo "$CHALLENGE" | sed -n 's/.*resource_metadata="\([^"]*\)".*/\1/p')
+
+step "2b. Read the protected resource metadata: which authorization server issues its tokens (RFC 9728)"
+show "curl $PRM_URL"
+PRM=$(curl -sf "$PRM_URL")
+echo "$PRM" | jq .
+AS_ISSUER=$(echo "$PRM" | jq -r '.authorization_servers[0]')
+
+step "2c. Read the authorization server's metadata (RFC 8414)"
+show "curl $AS_ISSUER/.well-known/oauth-authorization-server"
+AS=$(curl -sf "$AS_ISSUER/.well-known/oauth-authorization-server")
 echo "$AS" | jq '{token_endpoint, revocation_endpoint, grant_types_supported, scopes_supported}'
 TOKEN_EP=$(echo "$AS" | jq -r .token_endpoint)
 REVOKE_EP=$(echo "$AS" | jq -r .revocation_endpoint)

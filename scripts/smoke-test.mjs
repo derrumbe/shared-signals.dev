@@ -23,6 +23,14 @@ async function call(method, path, { token, body, form, headers = {} } = {}) {
 const meta = await call('GET', '/.well-known/ssf-configuration');
 ok(meta.status === 200 && meta.json.issuer === BASE && meta.json.spec_version === '1_0', 'discovery metadata', meta.json);
 ok(meta.json.authorization_schemes?.[0]?.spec_urn === 'urn:ietf:rfc:6749', 'authorization_schemes has OAuth');
+// RFC 9728: an unauthenticated call points at the resource metadata, which names the authorization server
+const bare = await call('GET', '/ssf/stream');
+const rmUrl = /resource_metadata="([^"]+)"/.exec(bare.headers.get('www-authenticate') ?? '')?.[1];
+ok(bare.status === 401 && rmUrl === `${BASE}/.well-known/oauth-protected-resource/ssf`, '401 challenge carries resource_metadata', bare.headers.get('www-authenticate'));
+const prm = rmUrl ? await call('GET', new URL(rmUrl).pathname) : { json: {} };
+ok(prm.json?.resource === `${BASE}/ssf` && prm.json.authorization_servers?.[0] === BASE && prm.json.scopes_supported?.includes('ssf.manage'), 'protected resource metadata', prm.json);
+const asm = await call('GET', '/.well-known/oauth-authorization-server');
+ok(asm.json?.issuer === prm.json?.authorization_servers?.[0] && asm.json.token_endpoint === `${BASE}/ssf/oauth/token`, 'authorization server metadata', asm.json);
 const jwks = await call('GET', '/jwks.json');
 ok(jwks.json?.keys?.[0]?.kty === 'RSA' && jwks.json.keys[0].kid && !jwks.json.keys[0].d, 'JWKS has a public RSA key only');
 
@@ -131,7 +139,7 @@ ok((await call('GET', `/ssf/stream?stream_id=${psid}`, { token })).status === 40
 await call('DELETE', `/ssf/stream?stream_id=${sid}`, { token });
 await call('POST', '/ssf/oauth/revoke', { form: { token } });
 const revoked = await call('GET', '/ssf/stream', { token });
-ok(revoked.status === 401 && revoked.headers.get('www-authenticate') === 'Bearer realm="shared-signals.dev", error="invalid_token", error_description="revoked"', 'revoked token rejected', revoked.headers.get('www-authenticate'));
+ok(revoked.status === 401 && revoked.headers.get('www-authenticate') === `Bearer realm="shared-signals.dev", resource_metadata="${BASE}/.well-known/oauth-protected-resource/ssf", error="invalid_token", error_description="revoked"`, 'revoked token rejected', revoked.headers.get('www-authenticate'));
 
 console.log(failures ? `\n${failures} failure(s)` : '\nall passed');
 process.exit(failures ? 1 : 0);

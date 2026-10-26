@@ -18,7 +18,7 @@ directory = "./dist"
 binding = "ASSETS"
 # Only these paths reach the Worker before the asset handler. Everything else is a
 # static file.
-run_worker_first = ["/.well-known/ssf-configuration*", "/.well-known/oauth-authorization-server", "/jwks.json", "/ssf/*", "/api/*"]
+run_worker_first = ["/.well-known/ssf-configuration*", "/.well-known/oauth-authorization-server", "/.well-known/oauth-protected-resource*", "/jwks.json", "/ssf/*", "/api/*"]
 not_found_handling = "404-page"
 
 # State for the sample Transmitter (one object per OAuth client), Receiver (one per receiver id)

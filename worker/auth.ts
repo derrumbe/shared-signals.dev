@@ -55,13 +55,18 @@ export async function tokenEndpoint(request: Request, env: Env, issuer: string):
   const iat = Math.floor(Date.now() / 1000);
   const scope = [...new Set(requested)].join(' ');
   const access_token = await signHs256(signer.hmacKey, {
-    iss: issuer, aud: `${issuer}/ssf`, sub: clientId, client_id: clientId, tid: await tenantFor(clientId, secret), scope, iat, exp: iat + TOKEN_TTL, jti: randomId(),
+    iss: issuer, aud: resourceFor(issuer), sub: clientId, client_id: clientId, tid: await tenantFor(clientId, secret), scope, iat, exp: iat + TOKEN_TTL, jti: randomId(),
   });
   return reply(200, { access_token, token_type: 'Bearer', expires_in: TOKEN_TTL, scope }, noStore);
 }
 
-export const challenge = (code?: string, description?: string, scope?: string) =>
-  ['Bearer realm="shared-signals.dev"', code && `error="${code}"`, description && `error_description="${description}"`, scope && `scope="${scope}"`].filter(Boolean).join(', ');
+/** The protected resource the tokens are for (their aud), and where its RFC 9728 metadata lives. */
+export const resourceFor = (issuer: string) => `${issuer}/ssf`;
+export const resourceMetadataUrl = (issuer: string) => `${issuer}/.well-known/oauth-protected-resource/ssf`;
+
+/** RFC 6750 §3 challenge, with RFC 9728 §5.1's resource_metadata so a client can find the authorization server. */
+export const challenge = (issuer: string, code?: string, description?: string, scope?: string) =>
+  ['Bearer realm="shared-signals.dev"', `resource_metadata="${resourceMetadataUrl(issuer)}"`, code && `error="${code}"`, description && `error_description="${description}"`, scope && `scope="${scope}"`].filter(Boolean).join(', ');
 
 /**
  * Checks the bearer token and scope. Returns the caller, or an RFC 6750 error reply.
@@ -70,26 +75,26 @@ export const challenge = (code?: string, description?: string, scope?: string) =
 export async function authenticate(request: Request, env: Env, issuer: string, need: 'ssf.read' | 'ssf.manage'): Promise<Caller | Reply> {
   const url = new URL(request.url);
   if (url.searchParams.has('access_token'))
-    return error(400, 'invalid_request', 'Access tokens in the query string are not accepted (RFC 6750 §2.3). Use the Authorization header.', { 'www-authenticate': challenge('invalid_request') });
+    return error(400, 'invalid_request', 'Access tokens in the query string are not accepted (RFC 6750 §2.3). Use the Authorization header.', { 'www-authenticate': challenge(issuer, 'invalid_request') });
   const auth = request.headers.get('authorization') ?? '';
   // RFC 6750 §3.1: a request with no Bearer credentials at all gets a bare challenge, with no error
   // code (so the body carries only a description). Any Bearer value we can't accept, malformed or not,
   // is invalid_token (401), which is what CAEP Interop Profile conformance tests expect.
   const m = auth.match(/^Bearer\s+(\S.*)$/i);
   if (!m)
-    return reply(401, { error_description: 'Send an access token as "Authorization: Bearer <token>". Get one from /ssf/oauth/token.' }, { 'www-authenticate': challenge() });
+    return reply(401, { error_description: 'Send an access token as "Authorization: Bearer <token>". Get one from /ssf/oauth/token.' }, { 'www-authenticate': challenge(issuer) });
   if (!/^[A-Za-z0-9._~+/-]+=*$/.test(m[1].trim()))
-    return error(401, 'invalid_token', 'The access token is malformed.', { 'www-authenticate': challenge('invalid_token', 'malformed token') });
+    return error(401, 'invalid_token', 'The access token is malformed.', { 'www-authenticate': challenge(issuer, 'invalid_token', 'malformed token') });
 
   const claims = await verifyHs256((await getSigner(env)).hmacKey, m[1].trim());
   const now = Math.floor(Date.now() / 1000);
-  if (!claims || claims.iss !== issuer || claims.aud !== `${issuer}/ssf`) return error(401, 'invalid_token', 'The access token is malformed or was not issued by this server.', { 'www-authenticate': challenge('invalid_token', 'bad token') });
-  if (typeof claims.exp !== 'number' || claims.exp <= now) return error(401, 'invalid_token', 'The access token has expired.', { 'www-authenticate': challenge('invalid_token', 'expired') });
+  if (!claims || claims.iss !== issuer || claims.aud !== resourceFor(issuer)) return error(401, 'invalid_token', 'The access token is malformed or was not issued by this server.', { 'www-authenticate': challenge(issuer, 'invalid_token', 'bad token') });
+  if (typeof claims.exp !== 'number' || claims.exp <= now) return error(401, 'invalid_token', 'The access token has expired.', { 'www-authenticate': challenge(issuer, 'invalid_token', 'expired') });
 
   const scopes = String(claims.scope ?? '').split(' ');
   // ssf.manage includes everything ssf.read allows.
   if (!scopes.includes(need) && !(need === 'ssf.read' && scopes.includes('ssf.manage')))
-    return error(403, 'insufficient_scope', `This call needs the ${need} scope.`, { 'www-authenticate': challenge('insufficient_scope', undefined, need) });
+    return error(403, 'insufficient_scope', `This call needs the ${need} scope.`, { 'www-authenticate': challenge(issuer, 'insufficient_scope', undefined, need) });
 
   return { clientId: claims.client_id, tenant: claims.tid, scopes, iat: claims.iat, issuer };
 }

@@ -39,7 +39,8 @@ import Base from '../layouts/Base.astro';
       <tbody>
         <tr><td><code>/.well-known/ssf-configuration</code></td><td>Transmitter Configuration Metadata</td></tr>
         <tr><td><code>/jwks.json</code></td><td>Signing keys (RS256)</td></tr>
-        <tr><td><code>/ssf/oauth/token</code></td><td>Access tokens (client credentials grant; any client_id, a secret of 16+ characters). Metadata at <code>/.well-known/oauth-authorization-server</code></td></tr>
+        <tr><td><code>/ssf/oauth/token</code></td><td>Access tokens (client credentials grant; any client_id, a secret of 16+ characters). Metadata at <code>/.well-known/oauth-authorization-server</code> (RFC 8414)</td></tr>
+        <tr><td><code>/.well-known/oauth-protected-resource/ssf</code></td><td>Protected resource metadata (RFC 9728) naming the authorization server for the <code>/ssf</code> API; every 401 links to it with <code>resource_metadata</code></td></tr>
         <tr><td><code>/ssf/stream</code>, <code>/ssf/status</code>, <code>/ssf/subjects:add</code>, <code>/ssf/subjects:remove</code>, <code>/ssf/verify</code></td><td>Stream management</td></tr>
         <tr><td><code>/ssf/poll/&lt;stream_id&gt;</code></td><td>Poll delivery (RFC 8936)</td></tr>
         <tr><td><code>/ssf/push/&lt;receiver_id&gt;</code></td><td>Sample Receiver push endpoint (RFC 8935)</td></tr>

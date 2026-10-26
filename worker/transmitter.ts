@@ -98,7 +98,7 @@ export class Transmitter extends DurableObject<Env> {
 
   /** Common entry checks: token not revoked; stream exists and belongs to the caller. */
   private async guard(c: Ctx): Promise<Reply | null> {
-    if (c.iat < (await this.meta()).revokedBefore) return error(401, 'invalid_token', 'The access token has been revoked.', { 'www-authenticate': challenge('invalid_token', 'revoked') });
+    if (c.iat < (await this.meta()).revokedBefore) return error(401, 'invalid_token', 'The access token has been revoked.', { 'www-authenticate': challenge(c.issuer, 'invalid_token', 'revoked') });
     return null;
   }
   private async find(c: Ctx, id: unknown): Promise<Stream | Reply> {
