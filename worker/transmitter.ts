@@ -8,6 +8,7 @@
 import { DurableObject } from 'cloudflare:workers';
 import { EVENTS, SCIM_PREFIX, uri } from '../src/data/events';
 import { getSigner, randomId } from './jose';
+import { challenge } from './auth';
 import { error, reply, type Reply } from './http';
 import { checkPublicUrl, safeFetch } from './ssrf';
 import type { Env } from './env';
@@ -97,7 +98,7 @@ export class Transmitter extends DurableObject<Env> {
 
   /** Common entry checks: token not revoked; stream exists and belongs to the caller. */
   private async guard(c: Ctx): Promise<Reply | null> {
-    if (c.iat < (await this.meta()).revokedBefore) return error(401, 'invalid_token', 'The access token has been revoked.', { 'www-authenticate': 'Bearer error="invalid_token", error_description="revoked"' });
+    if (c.iat < (await this.meta()).revokedBefore) return error(401, 'invalid_token', 'The access token has been revoked.', { 'www-authenticate': challenge('invalid_token', 'revoked') });
     return null;
   }
   private async find(c: Ctx, id: unknown): Promise<Stream | Reply> {

@@ -130,7 +130,8 @@ ok((await call('DELETE', `/ssf/stream?stream_id=${psid}`, { token })).status ===
 ok((await call('GET', `/ssf/stream?stream_id=${psid}`, { token })).status === 404, 'deleted stream is gone');
 await call('DELETE', `/ssf/stream?stream_id=${sid}`, { token });
 await call('POST', '/ssf/oauth/revoke', { form: { token } });
-ok((await call('GET', '/ssf/stream', { token })).status === 401, 'revoked token rejected');
+const revoked = await call('GET', '/ssf/stream', { token });
+ok(revoked.status === 401 && revoked.headers.get('www-authenticate') === 'Bearer realm="shared-signals.dev", error="invalid_token", error_description="revoked"', 'revoked token rejected', revoked.headers.get('www-authenticate'));
 
 console.log(failures ? `\n${failures} failure(s)` : '\nall passed');
 process.exit(failures ? 1 : 0);

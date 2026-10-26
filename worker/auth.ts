@@ -60,7 +60,7 @@ export async function tokenEndpoint(request: Request, env: Env, issuer: string):
   return reply(200, { access_token, token_type: 'Bearer', expires_in: TOKEN_TTL, scope }, noStore);
 }
 
-const challenge = (code?: string, description?: string, scope?: string) =>
+export const challenge = (code?: string, description?: string, scope?: string) =>
   ['Bearer realm="shared-signals.dev"', code && `error="${code}"`, description && `error_description="${description}"`, scope && `scope="${scope}"`].filter(Boolean).join(', ');
 
 /**
