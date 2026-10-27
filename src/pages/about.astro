@@ -51,6 +51,9 @@ const repo = 'https://github.com/derrumbe/shared-signals.dev';
       credentials (secret encrypted), and active sign-in sessions. No email, name or password. Signing in sets an <code>HttpOnly</code> session
       cookie, plus a five-minute cookie while a passkey prompt is open; there are no other cookies and no analytics. Accounts are deleted after
       90 days without use, or immediately from the account panel.</li>
+      <li><strong>Request logs</strong> — requests to the playground’s API (the sample Transmitter and Receiver, the inspector and accounts,
+      not the reading pages) are logged by Cloudflare for troubleshooting: time, address, status and the request’s details, which can
+      include your IP address. The logs are kept for a few days and seen only by the site’s maintainer.</li>
       <li><strong>Session signals</strong> — while signed in, signing in and out sends CAEP events about your account to your
       sandbox’s streams. They identify you only by a random account id, and you can turn them off.</li>
     </ul>

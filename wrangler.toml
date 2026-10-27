@@ -13,6 +13,12 @@ compatibility_date = "2026-01-01"
 # *.workers.dev, so there is one canonical address.
 workers_dev = false
 
+# Workers Logs: keep a searchable log of every request that reaches the Worker (the API and
+# playground backend, not static pages) for troubleshooting. Dashboard: the Worker → Logs.
+[observability]
+enabled = true
+head_sampling_rate = 1
+
 [assets]
 directory = "./dist"
 binding = "ASSETS"
