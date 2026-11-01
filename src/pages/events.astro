@@ -1,7 +1,8 @@
 ---
 import Base from '../layouts/Base.astro';
-import { Code } from 'astro:components';
-import { EVENTS, uri } from '../data/events';
+import EventCard from '../components/EventCard.astro';
+import { EVENTS } from '../data/events';
+import { PROSPECTIVE_EVENTS, PROSPECTIVE_PROFILES } from '../data/prospective';
 import { SPEC_URLS } from '../consts';
 const INTEROP = new Set(['session-revoked', 'credential-change', 'device-compliance-change', 'risk-level-change']);
 
@@ -11,58 +12,72 @@ const groups = [
   { id: 'ssf', title: 'SSF stream events', spec: SPEC_URLS.ssf, blurb: 'Housekeeping events about the stream itself, defined by the framework.' },
   { id: 'scim', title: 'SCIM events', spec: SPEC_URLS.scimEvents, blurb: 'Provisioning changes from a SCIM service provider, defined by IETF RFC 9967. The subject is a sub_id with format "scim" and the resource’s uri; a SET may carry several events from the same transaction, tied together by txn. Provisioning events come in a :full variant carrying the data and a :notice variant listing only the changed attributes.' },
 ] as const;
+
+// Prospective profiles, each split into the draft's own categories, in draft order.
+const prospective = PROSPECTIVE_PROFILES.map((p) => {
+  const events = PROSPECTIVE_EVENTS.filter((e) => e.spec === p.id);
+  const categories = [...new Set(events.map((e) => e.category))].map((c) => ({ title: c, events: events.filter((e) => e.category === c) }));
+  return { ...p, count: events.length, categories };
+});
 ---
-<Base title="Event types" description="Every CAEP, RISC, SSF and SCIM event type: URI, claims, and an example Security Event Token payload.">
+<Base title="Event types" description="Every CAEP, RISC, SSF and SCIM event type: URI, claims, and an example Security Event Token payload — plus prospective event types from draft profiles such as WISE, clearly marked.">
   <p class="eyebrow">Reference</p>
   <h1>Event types</h1>
   <p class="lede">Every event type defined by the OpenID Shared Signals specifications, plus the SCIM provisioning events of
-  IETF RFC 9967, with their claims and an example SET payload. Summaries are ours; the linked specs are normative.</p>
+  IETF RFC 9967, with their claims and an example SET payload. Summaries are ours; the linked specs are normative.
+  Below them, <a href="#prospective">prospective events</a> from profiles still being drafted.</p>
 
   <nav class="tags" style="margin-bottom:1rem">
     {groups.map((g) => <a href={`#${g.id}`} class={`tag ${g.id}`} style="text-decoration:none">{g.title}</a>)}
+    {prospective.map((p) => <a href={`#${p.id}`} class={`tag ${p.id} draft`} style="text-decoration:none">{p.name} · prospective</a>)}
   </nav>
 
   {groups.map((g) => (
     <section id={g.id}>
       <h2>{g.title}</h2>
       <p class="muted">{g.blurb} <a href={g.spec}>Specification →</a></p>
-      {EVENTS.filter((e) => e.spec === g.id).map((e) => (
-        <details id={`${e.spec}-${e.slug.replaceAll(':', '-')}`} class="card event" style="margin:.6rem 0">
-          <summary>
-            <span class={`tag ${e.spec}`}>{e.spec}</span>
-            <strong>{e.name}</strong>
-            {e.deprecated && <span class="tag neutral">deprecated</span>}
-            {e.spec === 'caep' && INTEROP.has(e.slug) && <span class="tag ssf">interop profile</span>}
-            <span class="muted ev-sum">{e.summary}</span>
-          </summary>
-          <div class="ev-body">
-            {e.deprecated && <p class="callout">{e.deprecated}</p>}
-            {e.spec === 'caep' && INTEROP.has(e.slug) && <p class="callout">A use case in the <a href="/specs/caep-interop/#use-cases">CAEP Interoperability Profile</a>: Transmitters must include a non-empty <code>reason_admin</code>, and Receivers must handle every allowed value of this event’s fields.</p>}
-            <p><code>{uri(e)}</code></p>
-            {e.claims.length > 0 ? (
-              <div class="table-wrap"><table>
-                <thead><tr><th>Claim</th><th></th><th>Meaning</th></tr></thead>
-                <tbody>{e.claims.map((c) => <tr><td><code>{c.name}</code></td><td class="muted" style="font-size:.78rem">{c.req}</td><td>{c.desc}</td></tr>)}</tbody>
-              </table></div>
-            ) : <p class="muted">No event-specific claims.</p>}
-            {e.example && <Code code={JSON.stringify(e.example, null, 2)} lang="json" themes={{ light: 'github-light', dark: 'github-dark' }} />}
-            {e.iopNote && <p class="muted" style="font-size:.88rem">{e.iopNote}</p>}
-          </div>
-        </details>
-      ))}
+      {EVENTS.filter((e) => e.spec === g.id).map((e) => <EventCard event={e} interop={e.spec === 'caep' && INTEROP.has(e.slug)} />)}
     </section>
   ))}
+
+  <section id="prospective">
+    <h2>Prospective events</h2>
+    <div class="callout draft">
+      <p><strong>Under development.</strong> These event types come from profiles of the Shared Signals Framework that are still
+      being drafted. They are not final OpenID specifications: names, URIs, claims and values can change, or be dropped, from one
+      draft to the next. They are listed so implementers can follow the work and give feedback.</p>
+      <p>The sample <a href="/playground/">Transmitter and Receiver</a> do not send, accept or validate them, and they are not in
+      the Transmitter’s <code>events_supported</code>.</p>
+    </div>
+
+    {prospective.map((p) => (
+      <section id={p.id}>
+        <h3 class="prospective-title"><span class={`tag ${p.id} draft`}>{p.name} · {p.draft}</span> {p.title}</h3>
+        <p class="muted">{p.blurb} <a href={p.source}>Draft →</a></p>
+        <p class="muted" style="font-size:.85rem">{p.count} event types, transcribed from the draft at commit <code>{p.sync.commit}</code> (checked {p.sync.checked}).</p>
+        {p.categories.map((c) => (
+          <>
+            <h4>{c.title}</h4>
+            {c.events.map((e) => <EventCard event={e} draft={p.draft} />)}
+          </>
+        ))}
+      </section>
+    ))}
+  </section>
 </Base>
 
 <style>
-  .event summary{cursor:pointer;display:grid;grid-template-columns:auto 1fr;gap:.25rem .7rem;align-items:baseline;list-style:none}
-  .event summary::-webkit-details-marker{display:none}
-  .event summary strong{font-weight:600}
-  .event summary .ev-sum{grid-column:2;font-size:.92rem}
-  .event summary .tag.neutral,.event summary .tag.ssf{grid-column:2;justify-self:start}
-  .event[open]{border-color:var(--accent)}
-  .ev-body{margin-top:.8rem;min-width:0}
-  .ev-body code{overflow-wrap:anywhere}
+  :global(.event summary){cursor:pointer;display:grid;grid-template-columns:auto 1fr;gap:.25rem .7rem;align-items:baseline;list-style:none}
+  :global(.event summary::-webkit-details-marker){display:none}
+  :global(.event summary strong){font-weight:600}
+  :global(.event summary .ev-sum){grid-column:2;font-size:.92rem}
+  :global(.event summary .tag.neutral),:global(.event summary .tag.ssf),:global(.event summary .tag.draft){grid-column:2;justify-self:start}
+  :global(.event[open]){border-color:var(--accent)}
+  :global(.event.prospective){border-style:dashed}
+  :global(.ev-body){margin-top:.8rem;min-width:0}
+  :global(.ev-body code){overflow-wrap:anywhere}
+  .prospective-title{display:flex;flex-wrap:wrap;align-items:center;gap:.5rem}
+  h4{margin:1.4rem 0 .4rem;font-size:.95rem;color:var(--ink-soft)}
 </style>
 <script>
   // Open the event named in the URL hash, so /events/#caep-session-revoked deep-links.

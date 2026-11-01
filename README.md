@@ -22,6 +22,7 @@ npm run check-worker  # typecheck worker/
 | `src/pages/learn/*.md` | The concepts walkthrough. Markdown, ordered by `LEARN` in `src/consts.ts`. |
 | `src/pages/specs.astro` | The specs and the RFCs underneath them. |
 | `src/data/events.ts` | The CAEP / RISC / SSF event catalogue; `/events/` renders from it. |
+| `src/data/prospective.ts` | Prospective events from draft profiles (WISE draft 03). Shown on `/events/` under an "under development" banner; kept out of the sample Transmitter, Receiver and validator. Re-check against the draft (commit in `PROSPECTIVE_PROFILES`) when it changes. |
 | `src/content/implementations/implementations.json` | Implementations list, schema-checked in `src/content.config.ts`. |
 | `src/pages/playground*` | Playground: Transmitter console, sample Receiver, SET inspector (browser code in `src/scripts/playground.ts`). |
 | `worker/index.ts` | The Worker: serves `dist/`, and routes discovery, OAuth, `/ssf/*` and `/api/*`. |

@@ -1,11 +1,12 @@
 // Event catalogue, transcribed from the OpenID CAEP 1.0, RISC 1.0 and SSF 1.0 final
-// specifications and IETF RFC 9967 (SCIM Events). Keep summaries in our own words and link to the
+// specifications and IETF RFC 9967 (SCIM Events). Prospective draft profiles (WISE) live in
+// prospective.ts, not here. Keep summaries in our own words and link to the
 // spec for normative text.
 
 export type Claim = { name: string; req: 'REQUIRED' | 'RECOMMENDED' | 'OPTIONAL'; desc: string };
 export type EventType = {
   slug: string;
-  spec: 'caep' | 'risc' | 'ssf' | 'scim';
+  spec: 'caep' | 'risc' | 'ssf' | 'scim' | 'wise';
   name: string;
   summary: string;
   claims: Claim[];
