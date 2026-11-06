@@ -20,12 +20,13 @@ const prospective = PROSPECTIVE_PROFILES.map((p) => {
   return { ...p, count: events.length, categories };
 });
 ---
-<Base title="Event types" description="Every CAEP, RISC, SSF and SCIM event type: URI, claims, and an example Security Event Token payload — plus prospective event types from draft profiles such as WISE, clearly marked.">
+<Base title="Event types" description="Every CAEP, RISC, SSF and SCIM event type: URI, claims, and an example Security Event Token payload — plus prospective event types from the WISE, IITP and MLE draft profiles, clearly marked.">
   <p class="eyebrow">Reference</p>
   <h1>Event types</h1>
   <p class="lede">Every event type defined by the OpenID Shared Signals specifications, plus the SCIM provisioning events of
   IETF RFC 9967, with their claims and an example SET payload. Summaries are ours; the linked specs are normative.
-  Below them, <a href="#prospective">prospective events</a> from profiles still being drafted.</p>
+  Below them, <a href="#prospective">prospective events</a> from profiles still being drafted: WISE for workloads, IITP for
+  infrastructure threats, and MLE for AI agents’ mandates.</p>
 
   <nav class="tags" style="margin-bottom:1rem">
     {groups.map((g) => <a href={`#${g.id}`} class={`tag ${g.id}`} style="text-decoration:none">{g.title}</a>)}
@@ -54,10 +55,11 @@ const prospective = PROSPECTIVE_PROFILES.map((p) => {
       <section id={p.id}>
         <h3 class="prospective-title"><span class={`tag ${p.id} draft`}>{p.name} · {p.draft}</span> {p.title}</h3>
         <p class="muted">{p.blurb} <a href={p.source}>Draft →</a></p>
+        {p.notes && <ul class="muted notes">{p.notes.map((n) => <li>{n}</li>)}</ul>}
         <p class="muted" style="font-size:.85rem">{p.count} event types, transcribed from the draft at commit <code>{p.sync.commit}</code> (checked {p.sync.checked}).</p>
         {p.categories.map((c) => (
           <>
-            <h4>{c.title}</h4>
+            {p.categories.length > 1 && <h4>{c.title}</h4>}
             {c.events.map((e) => <EventCard event={e} draft={p.draft} />)}
           </>
         ))}
@@ -78,6 +80,8 @@ const prospective = PROSPECTIVE_PROFILES.map((p) => {
   :global(.ev-body code){overflow-wrap:anywhere}
   .prospective-title{display:flex;flex-wrap:wrap;align-items:center;gap:.5rem}
   h4{margin:1.4rem 0 .4rem;font-size:.95rem;color:var(--ink-soft)}
+  .notes{font-size:.9rem;padding-left:1.2rem;margin:.2rem 0 .8rem}
+  #prospective section + section{margin-top:2.5rem}
 </style>
 <script>
   // Open the event named in the URL hash, so /events/#caep-session-revoked deep-links.
