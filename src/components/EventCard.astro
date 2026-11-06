@@ -1,0 +1,37 @@
+---
+// One collapsible entry in the /events/ catalogue.
+import { Code } from 'astro:components';
+import { uri, type EventType } from '../data/events';
+
+interface Props {
+  event: EventType;
+  /** In the CAEP Interoperability Profile's use cases. */
+  interop?: boolean;
+  /** A prospective event: the draft it comes from, e.g. "Draft 03". */
+  draft?: string;
+}
+const { event: e, interop = false, draft } = Astro.props;
+---
+<details id={`${e.spec}-${e.slug.replaceAll(':', '-')}`} class:list={['card', 'event', { prospective: !!draft }]} style="margin:.6rem 0">
+  <summary>
+    <span class={`tag ${e.spec}`}>{e.spec}</span>
+    <strong>{e.name}</strong>
+    {e.deprecated && <span class="tag neutral">deprecated</span>}
+    {interop && <span class="tag ssf">interop profile</span>}
+    {draft && <span class="tag draft">prospective · {draft}</span>}
+    <span class="muted ev-sum">{e.summary}</span>
+  </summary>
+  <div class="ev-body">
+    {e.deprecated && <p class="callout">{e.deprecated}</p>}
+    {interop && <p class="callout">A use case in the <a href="/specs/caep-interop/#use-cases">CAEP Interoperability Profile</a>: Transmitters must include a non-empty <code>reason_admin</code>, and Receivers must handle every allowed value of this event’s fields.</p>}
+    <p><code>{uri(e)}</code>{draft && <span class="muted"> (proposed; may change before the profile is final)</span>}</p>
+    {e.claims.length > 0 ? (
+      <div class="table-wrap"><table>
+        <thead><tr><th>Claim</th><th></th><th>Meaning</th></tr></thead>
+        <tbody>{e.claims.map((c) => <tr><td><code>{c.name}</code></td><td class="muted" style="font-size:.78rem">{c.req}</td><td>{c.desc}</td></tr>)}</tbody>
+      </table></div>
+    ) : <p class="muted">No event-specific claims.</p>}
+    {e.example && <Code code={JSON.stringify(e.example, null, 2)} lang="json" themes={{ light: 'github-light', dark: 'github-dark' }} />}
+    {e.iopNote && <p class="muted" style="font-size:.88rem">{e.iopNote}</p>}
+  </div>
+</details>

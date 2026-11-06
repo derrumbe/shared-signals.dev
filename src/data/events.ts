@@ -1,11 +1,14 @@
 // Event catalogue, transcribed from the OpenID CAEP 1.0, RISC 1.0 and SSF 1.0 final
-// specifications and IETF RFC 9967 (SCIM Events). Keep summaries in our own words and link to the
+// specifications and IETF RFC 9967 (SCIM Events). Prospective draft profiles (WISE, IITP, MLE) live in
+// prospective.ts, not here. Keep summaries in our own words and link to the
 // spec for normative text.
 
 export type Claim = { name: string; req: 'REQUIRED' | 'RECOMMENDED' | 'OPTIONAL'; desc: string };
 export type EventType = {
   slug: string;
-  spec: 'caep' | 'risc' | 'ssf' | 'scim';
+  spec: 'caep' | 'risc' | 'ssf' | 'scim' | 'wise' | 'iitp' | 'mle';
+  /** Event type URI prefix, when it is not https://schemas.openid.net/secevent/<spec>/event-type/. */
+  typeBase?: string;
   name: string;
   summary: string;
   claims: Claim[];
@@ -17,7 +20,7 @@ export type EventType = {
 
 // SCIM event types are URNs registered by RFC 9967; their slugs are the part after the prefix ("prov:create:full").
 export const SCIM_PREFIX = 'urn:ietf:params:scim:event:';
-export const uri = (e: EventType) => e.spec === 'scim' ? SCIM_PREFIX + e.slug : `https://schemas.openid.net/secevent/${e.spec}/event-type/${e.slug}`;
+export const uri = (e: EventType) => e.typeBase ? e.typeBase + e.slug : e.spec === 'scim' ? SCIM_PREFIX + e.slug : `https://schemas.openid.net/secevent/${e.spec}/event-type/${e.slug}`;
 
 const ts = { name: 'event_timestamp', req: 'OPTIONAL', desc: 'When the event occurred (NumericDate). Optional on every CAEP event.' } as const;
 const caepCommon: Claim[] = [
